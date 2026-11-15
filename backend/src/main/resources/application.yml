@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:parqueadero}
+    username: ${POSTGRES_USER:parqueadero_user}
+    password: ${POSTGRES_PASSWORD:1056123237}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+server:
+  port: ${BACKEND_PORT:8080}
+app:
+  usuarios:
+    admin:
+      nombre: ${ADMIN_USUARIO:admin}
+      contrasena: ${ADMIN_CONTRASENA:}
+    operador:
+      nombre: ${OPERADOR_USUARIO:operador1}
+      contrasena: ${OPERADOR_CONTRASENA:}
