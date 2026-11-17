@@ -1,19 +1,25 @@
 package com.uam.parqueadero.seguridad;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -86,6 +92,37 @@ class AuthControllerTest {
                         .content(cuerpo("fantasma", "x")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.mensaje").value("Usuario o contraseña incorrectos"));
+    }
+
+    /** CA-8: al cerrar sesión la sesión HTTP queda invalidada. */
+    @Test
+    void cerrarSesionInvalidaLaSesion() throws Exception {
+        MockHttpSession sesion = new MockHttpSession();
+
+        mvc.perform(post("/api/auth/logout").session(sesion))
+                .andExpect(status().isNoContent());
+
+        assertTrue(sesion.isInvalid());
+    }
+
+    @Test
+    void cerrarSesionSinSesionTambienResponde204() throws Exception {
+        mvc.perform(post("/api/auth/logout")).andExpect(status().isNoContent());
+    }
+
+    /** El frontend consulta quién está conectado para mostrar su nombre y rol. */
+    @Test
+    void yoDevuelveElUsuarioYSuRol() throws Exception {
+        UsernamePasswordAuthenticationToken autenticacion =
+                UsernamePasswordAuthenticationToken.authenticated(
+                        "operador1", null,
+                        List.of(new SimpleGrantedAuthority(
+                                "ROLE_OPERADOR")));
+
+        mvc.perform(get("/api/auth/yo").principal(autenticacion))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.usuario").value("operador1"))
+                .andExpect(jsonPath("$.rol").value("OPERADOR"));
     }
 
     @Test

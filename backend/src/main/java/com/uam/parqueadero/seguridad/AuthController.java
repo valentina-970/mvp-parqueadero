@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
 /** Inicio de sesión (HU-05). La sesión viaja en una cookie. */
@@ -55,6 +57,23 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("mensaje", MENSAJE_CREDENCIALES));
         }
+    }
+
+    /** Cierra la sesión actual: invalida la cookie y limpia el contexto de seguridad. */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        if (sesion != null) {
+            sesion.invalidate();
+        }
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Devuelve el usuario de la sesión actual; sin sesión la seguridad responde 401. */
+    @GetMapping("/yo")
+    public UsuarioSesion yo(Authentication autenticacion) {
+        return aSesion(autenticacion);
     }
 
     private static UsuarioSesion aSesion(Authentication autenticacion) {
