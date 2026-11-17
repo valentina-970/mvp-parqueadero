@@ -19,6 +19,23 @@ body {
   border-radius: 12px;
 }
 
+/* Barra superior oscura; el enlace de la pantalla actual se resalta */
+.barra-principal {
+  background: var(--barra);
+}
+
+.barra-principal .nav-link {
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  margin-right: 0.25rem;
+  color: #d1d5db;
+}
+
+.barra-principal .nav-link.active {
+  background: #374151;
+  color: #fff;
+}
+
 /* Inicio de sesión: tarjeta centrada en pantalla */
 .login-pantalla {
   min-height: 100vh;
