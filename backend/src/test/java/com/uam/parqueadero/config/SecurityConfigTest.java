@@ -1,5 +1,6 @@
 package com.uam.parqueadero.config;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,6 +50,14 @@ class SecurityConfigTest {
     @WithMockUser(roles = "ADMINISTRADOR")
     void elAdministradorAccedeALaAdministracion() throws Exception {
         mvc.perform(get("/api/admin/tarifas")).andExpect(status().isOk());
+    }
+
+    /** La documentación Swagger se puede abrir sin iniciar sesión. */
+    @Test
+    void laDocumentacionSwaggerEsPublica() throws Exception {
+        // Sin sesión no debe responder 401: la seguridad deja pasar la ruta
+        assertNotEquals(401,
+                mvc.perform(get("/v3/api-docs")).andReturn().getResponse().getStatus());
     }
 
     /** El estado de la API no exige sesión: lo usa el frontend para comprobar la conexión. */

@@ -45,6 +45,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(a -> a
                 .requestMatchers("/api/health").permitAll()
+                // Documentación de la API (Swagger)
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 // Solo el administrador gestiona la configuración (tarifas, franjas, cupos)
                 .requestMatchers("/api/admin/**").hasRole(Rol.ADMINISTRADOR.name())

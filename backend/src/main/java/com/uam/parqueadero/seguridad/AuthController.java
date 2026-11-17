@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -27,6 +29,7 @@ import jakarta.validation.Valid;
 /** Inicio de sesión (HU-05). La sesión viaja en una cookie. */
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Autenticación", description = "Inicio y cierre de sesión por rol")
 public class AuthController {
 
     /** Mensaje único para credenciales inválidas: no revela si falló el usuario o la contraseña. */
@@ -41,6 +44,9 @@ public class AuthController {
     }
 
     /** Valida las credenciales y abre la sesión; responde 401 si no son válidas. */
+    @Operation(summary = "Iniciar sesión",
+            description = "Responde 200 con el usuario y su rol, o 401 con el mensaje "
+                    + "\"Usuario o contraseña incorrectos\".")
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest peticion,
                                                HttpServletRequest request, HttpServletResponse response) {
@@ -60,6 +66,7 @@ public class AuthController {
     }
 
     /** Cierra la sesión actual: invalida la cookie y limpia el contexto de seguridad. */
+    @Operation(summary = "Cerrar sesión")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request) {
         HttpSession sesion = request.getSession(false);
@@ -71,6 +78,7 @@ public class AuthController {
     }
 
     /** Devuelve el usuario de la sesión actual; sin sesión la seguridad responde 401. */
+    @Operation(summary = "Usuario de la sesión actual")
     @GetMapping("/yo")
     public UsuarioSesion yo(Authentication autenticacion) {
         return aSesion(autenticacion);
