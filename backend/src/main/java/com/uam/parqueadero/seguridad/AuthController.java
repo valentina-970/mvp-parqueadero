@@ -1,5 +1,7 @@
 package com.uam.parqueadero.seguridad;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +27,9 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    /** Mensaje único para credenciales inválidas: no revela si falló el usuario o la contraseña. */
+    static final String MENSAJE_CREDENCIALES = "Usuario o contraseña incorrectos";
+
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository contextoRepository = new HttpSessionSecurityContextRepository();
 
@@ -35,7 +40,7 @@ public class AuthController {
 
     /** Valida las credenciales y abre la sesión; responde 401 si no son válidas. */
     @PostMapping("/login")
-    public ResponseEntity<UsuarioSesion> login(@Valid @RequestBody LoginRequest peticion,
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest peticion,
                                                HttpServletRequest request, HttpServletResponse response) {
         try {
             Authentication autenticacion = authenticationManager.authenticate(
@@ -47,7 +52,8 @@ public class AuthController {
             contextoRepository.saveContext(contexto, request, response);
             return ResponseEntity.ok(aSesion(autenticacion));
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("mensaje", MENSAJE_CREDENCIALES));
         }
     }
 

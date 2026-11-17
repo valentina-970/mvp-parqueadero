@@ -70,11 +70,22 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.rol").value("OPERADOR"));
     }
 
+    /** CP-05-04 (error): contraseña incorrecta → mensaje genérico de credenciales inválidas. */
     @Test
-    void conContrasenaIncorrectaResponde401() throws Exception {
+    void conContrasenaIncorrectaMuestraMensajeGenerico() throws Exception {
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(cuerpo("admin", "otra")))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Usuario o contraseña incorrectos"));
+    }
+
+    /** CA-2: el mensaje es idéntico si el usuario no existe, para no revelar cuál dato falló. */
+    @Test
+    void conUsuarioInexistenteMuestraElMismoMensaje() throws Exception {
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content(cuerpo("fantasma", "x")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje").value("Usuario o contraseña incorrectos"));
     }
 
     @Test
