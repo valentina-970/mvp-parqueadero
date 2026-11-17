@@ -24,9 +24,18 @@ export default function AuthProvider({ children }) {
     return sesion;
   }, []);
 
+  const cerrarSesion = useCallback(async () => {
+    try {
+      await post('/api/auth/logout');
+    } finally {
+      // Aunque falle la llamada, la interfaz deja de mostrar la sesión
+      setUsuario(null);
+    }
+  }, []);
+
   const valor = useMemo(
-    () => ({ usuario, cargando, iniciarSesion }),
-    [usuario, cargando, iniciarSesion],
+    () => ({ usuario, cargando, iniciarSesion, cerrarSesion }),
+    [usuario, cargando, iniciarSesion, cerrarSesion],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

@@ -36,6 +36,12 @@ body {
   color: #fff;
 }
 
+.enlace-sesion {
+  color: #8ab4f8;
+  font-weight: 600;
+  text-decoration: none;
+}
+
 /* Inicio de sesión: tarjeta centrada en pantalla */
 .login-pantalla {
   min-height: 100vh;
