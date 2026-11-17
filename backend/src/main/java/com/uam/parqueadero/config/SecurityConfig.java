@@ -4,9 +4,13 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -25,6 +29,14 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /** Autentica contra la abstracción {@link UserDetailsService}, comparando con el hash BCrypt. */
+    @Bean
+    AuthenticationManager authenticationManager(UserDetailsService usuarios, PasswordEncoder encoder) {
+        DaoAuthenticationProvider proveedor = new DaoAuthenticationProvider(usuarios);
+        proveedor.setPasswordEncoder(encoder);
+        return new ProviderManager(proveedor);
+    }
+
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -36,6 +48,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of("http://localhost:5173"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        // Necesario para que el navegador envíe la cookie de sesión en desarrollo
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
