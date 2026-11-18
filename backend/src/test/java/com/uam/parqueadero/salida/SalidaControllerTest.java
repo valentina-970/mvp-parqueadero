@@ -41,7 +41,7 @@ class SalidaControllerTest {
     @WithMockUser(roles = "OPERADOR")
     void recibeLaPlacaYLaConfianzaYResponde() throws Exception {
         when(operacion.procesar(any())).thenReturn(new ResultadoSalida(
-                true, "Salida autorizada", "ABC123", "Carro", null, new BigDecimal("0.95"), Instant.now()));
+                true, "Salida autorizada", "ABC123", "Carro", null, EstadoBarrera.ABIERTA, new BigDecimal("0.95"), Instant.now()));
 
         mvc.perform(post("/api/salida").contentType(MediaType.APPLICATION_JSON).content(CUERPO_VALIDO))
                 .andExpect(status().isOk())

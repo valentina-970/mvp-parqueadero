@@ -38,6 +38,9 @@ class OperacionCarrilSalidaTest {
     private final Estancias estancias = mock(Estancias.class);
     private final CobrosDelDia cobros = mock(CobrosDelDia.class);
     private final RegistroEventos eventos = mock(RegistroEventos.class);
+    private final Barrera barrera = new BarreraSimuladaDePrueba();
+    private final UUID eventoId = UUID.randomUUID();
+    private final UUID estanciaId = UUID.randomUUID();
     private final UUID sede = UUID.randomUUID();
     private final TipoVehiculoDetectado carro = new TipoVehiculoDetectado(UUID.randomUUID(), "CARRO", "Carro");
     private final TipoVehiculoDetectado moto = new TipoVehiculoDetectado(UUID.randomUUID(), "MOTO", "Moto");
@@ -49,13 +52,14 @@ class OperacionCarrilSalidaTest {
         SedeActual sedeActual = () -> sede;
         PasoSalida cadena = new ValidarPlacaPaso(clasificador);
         cadena.enlazar(new VerificarIngresoPaso(estancias)).enlazar(new VerificarDeudaPaso(cobros, reloj));
-        operacion = new OperacionCarrilSalida(cadena, eventos, sedeActual, reloj);
+        operacion = new OperacionCarrilSalida(cadena, eventos, estancias, barrera, sedeActual, reloj);
 
         when(clasificador.clasificar("ABC123")).thenReturn(Optional.of(carro));
         when(clasificador.clasificar("XYZ12D")).thenReturn(Optional.of(moto));
         when(clasificador.clasificar("AB1234")).thenReturn(Optional.empty());
+        when(eventos.registrarSalida(any())).thenReturn(eventoId);
         when(estancias.buscarAbierta(any(), any()))
-                .thenReturn(Optional.of(new EstanciaAbierta(UUID.randomUUID(), AHORA.minusSeconds(3600))));
+                .thenReturn(Optional.of(new EstanciaAbierta(estanciaId, AHORA.minusSeconds(3600))));
         when(cobros.buscar(any(), any(), any())).thenReturn(Optional.empty());
     }
 
@@ -109,13 +113,48 @@ class OperacionCarrilSalidaTest {
         verify(eventos).registrarSalida(any());
     }
 
-    /** CP-04-01 (éxito): moto sin cobro → ABRE. */
+    /** CP-04-01 (éxito): moto adentro, sin cobro → ABRE y la moto queda fuera (libera su cupo). */
     @Test
-    void unaMotoSinCobroAbre() {
+    void unaMotoSinCobroAbreYQuedaFuera() {
         ResultadoSalida resultado = operacion.procesar(solicitud("XYZ12D"));
 
         assertTrue(resultado.abre());
         assertEquals("Moto", resultado.tipoVehiculo());
+        assertEquals(EstadoBarrera.ABIERTA, resultado.barrera());
+        verify(estancias).cerrar(estanciaId, eventoId, AHORA);
+    }
+
+    /** CP-04-04 (error): con cobro pendiente la barrera queda cerrada y la estancia sigue abierta. */
+    @Test
+    void siNoAbreLaBarreraSeCierraYElVehiculoSigueAdentro() {
+        barrera.abrir(); // venía abierta de una salida anterior
+        when(cobros.buscar(sede, "ABC123", HOY))
+                .thenReturn(Optional.of(new CobroDia(UUID.randomUUID(), EstadoCobro.PENDIENTE, new BigDecimal("5000"))));
+
+        ResultadoSalida resultado = operacion.procesar(solicitud("ABC123"));
+
+        assertEquals(EstadoBarrera.CERRADA, resultado.barrera());
+        verify(estancias, never()).cerrar(any(), any(), any());
+    }
+
+    /** Barrera mínima para las pruebas: guarda su estado, igual que la simulada. */
+    private static class BarreraSimuladaDePrueba implements Barrera {
+        private EstadoBarrera estado = EstadoBarrera.CERRADA;
+
+        @Override
+        public void abrir() {
+            estado = EstadoBarrera.ABIERTA;
+        }
+
+        @Override
+        public void cerrar() {
+            estado = EstadoBarrera.CERRADA;
+        }
+
+        @Override
+        public EstadoBarrera estado() {
+            return estado;
+        }
     }
 
     /** Una placa inválida se rechaza sin registrar evento: el evento exige el tipo de vehículo. */

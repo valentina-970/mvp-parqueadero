@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param placa          placa normalizada
  * @param tipoVehiculo   nombre del tipo de vehículo, o {@code null} si la placa no es válida
  * @param valorPendiente valor del cobro pendiente, solo cuando la salida se niega por deuda
+ * @param barrera        posición de la barrera después del intento
  * @param confianza      confianza de la lectura recibida
  * @param ocurridoEn     momento del intento de salida
  */
@@ -22,6 +23,7 @@ public record ResultadoSalida(
         String placa,
         @Schema(nullable = true) String tipoVehiculo,
         @Schema(nullable = true) BigDecimal valorPendiente,
+        EstadoBarrera barrera,
         BigDecimal confianza,
         Instant ocurridoEn) {
 }
