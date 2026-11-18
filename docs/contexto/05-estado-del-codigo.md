@@ -49,6 +49,13 @@ mvp-parqueadero/
   - **Puertos (principios D e I):** `ClasificadorPlacas`, `Estancias`, `CobrosDelDia` (solo lectura), `RegistroEventos` y `Barrera`. Sus adaptadores están en `salida/infraestructura/` (JDBC y `BarreraSimulada`). Leen y escriben las tablas del esquema, así que no chocan con las entidades que creen HU-01 y HU-02; si esas historias ofrecen sus propios repositorios, solo se cambia el adaptador.
   - **Reutilizable por todos (`comun/`):** `Placa.normalizar`, `DiaOperativo.de` (06:00–05:59), `Dinero.formatear`, el puerto `SedeActual` y el bean `Clock` de `config/RelojConfig` (zona America/Bogota).
   - Una placa con formato inválido se rechaza sin registrar evento, porque `evento_acceso` exige el tipo de vehículo. El cupo se libera al cerrar la estancia, ya que los cupos ocupados son las estancias abiertas.
+- **Carril de entrada (HU-01):** paquete `entrada/`. `POST /api/entrada` recibe `{placa, confianza}` y responde `{resultado, motivo, placa, tipoVehiculo, confianza, ocurridoEn}`, con `resultado` = `PERMITIDO`, `PENDIENTE_VALIDACION` o `RECHAZADO`; `GET /api/entrada/ultimo` devuelve la última lectura (204 si no hay) para la pantalla del operador. Responde 400 solo si el cuerpo es inválido (confianza fuera de 0 a 1).
+  - **Adapter:** `LectorPlacas` es el puerto del lector; `infraestructura/LectorSimulado` lo implementa y convierte lo que envía el simulador en una `LecturaPlaca` con la placa normalizada. Una cámara real sería otro adaptador (principio L).
+  - **Facade:** `OperacionCarrilEntrada` lee la placa, ejecuta la cadena, registra el evento, abre la estancia y publica el aviso, todo en una transacción.
+  - **Chain of Responsibility:** `PasoEntrada` y sus pasos `ValidarFormatoPaso` → `VerificarConfianzaPaso` → `VerificarNoAdentroPaso`, armados en `CadenaEntradaConfig`. A diferencia de la salida, el contexto (`ContextoEntrada`) guarda un `EstadoIngreso`; el primer paso que decide (rechaza o deja pendiente) detiene la cadena.
+  - **Puertos:** `UmbralConfianza` (lee `parametro.umbral_confianza`, 0,80 si no existe), `EstanciasEntrada` y `EventosEntrada`, con adaptadores JDBC en `entrada/infraestructura/`. Reutiliza `ClasificadorPlacas` y `TipoVehiculoDetectado` del paquete `salida`.
+  - **Observer:** un ingreso permitido publica `IngresoRegistrado` (estancia, sede, placa, tipo de vehículo, hora y día operativo). HU-02 lo escucha con `@EventListener` para generar el cobro, sin que el carril la conozca.
+  - Placa inválida: se rechaza sin registrar evento (CA-6). Confianza menor que el umbral: se registra el evento como `PENDIENTE_VALIDACION`, sin estancia; HU-06 lo completa. Vehículo con estancia abierta: se rechaza y el intento queda registrado.
 - **Swagger:** springdoc en `/swagger-ui.html` y `/v3/api-docs`. Todo endpoint nuevo se documenta con `@Tag` y `@Operation`.
 - **`controller/HealthController`:** `GET /api/health` responde `{"estado":"ok"}`.
 - **`application.yml`:** toda la configuración sale de variables de entorno, con valores por defecto para desarrollo local.
@@ -68,8 +75,9 @@ El archivo `.env` es local y **no se sube**; `.env.example` documenta las variab
 ## Frontend
 
 - **React con Vite, JavaScript** (no TypeScript), con React-Bootstrap, Bootstrap, React Router y ESLint.
-- **Rutas:** `/login`, `/entrada`, `/salida`, `/administracion` y `/consultas`. Hoy solo `/login` tiene interfaz completa; las demás son marcadores (`components/Pagina`) pendientes de cada historia.
-- **Componentes compartidos según los mockups:** `PlacaVisual` (placa amarilla), `BannerResultado` (verde/rojo), `IndicadorBarrera`. Están pensados para que los usen las demás pantallas.
+- **Rutas:** `/login`, `/entrada`, `/salida`, `/administracion` y `/consultas`. `/login`, `/entrada` y `/salida` tienen interfaz; las demás son marcadores (`components/Pagina`) pendientes de cada historia.
+- **Componentes compartidos según los mockups:** `PlacaVisual` (placa amarilla), `BannerResultado` (verde, rojo o amarillo), `IndicadorBarrera`. Están pensados para que los usen las demás pantallas.
+- **`pages/Entrada`:** carril de entrada (`components/CarrilEntrada`, consulta `/api/entrada/ultimo` cada 2 segundos) y, a la derecha, `components/SimuladorLectura`, un formulario de placa y confianza que envía la lectura a la ruta que recibe (sirve también para la salida). El banner amarillo (`.banner-aviso`) marca las lecturas que requieren validación manual.
 - **`pages/Salida`:** carril de salida (`components/CarrilSalida`, consulta `/api/salida/ultima` cada 2 segundos) y, a la derecha, el espacio de la caja que implementa HU-03.
 - **`pages/Login`:** inicio de sesión real contra `/api/auth/login`, según el mockup (mensaje de error genérico).
 - **`auth/`:** `AuthProvider` guarda el usuario de la sesión (la recupera con `/api/auth/yo` al abrir la app) y ofrece `iniciarSesion` y `cerrarSesion`; `useAuth` lo expone a los componentes.
@@ -124,6 +132,6 @@ No corras `npm run dev` y el contenedor `frontend` a la vez: usan el mismo puert
 ## Pendientes técnicos conocidos
 
 - Falta el pipeline de integración continua que corre las pruebas en cada pull request (TT-06).
-- Las pruebas unitarias cubren por ahora HU-05; `ParqueaderoApplicationTests` (arranque completo) necesita la base de datos levantada.
-- Las historias HU-01 a HU-03 y HU-06 a HU-09 y la vista de la sede (TT-09) no están implementadas.
+- Las pruebas unitarias cubren HU-01, HU-04 y HU-05; `ParqueaderoApplicationTests` (arranque completo) necesita la base de datos levantada y el `.env` cargado en la terminal.
+- Las historias HU-02, HU-03, HU-06 a HU-09 y la vista de la sede (TT-09) no están implementadas.
 - Una migración ya aplicada no se edita: los cambios al esquema van en `V3__...` en adelante.
