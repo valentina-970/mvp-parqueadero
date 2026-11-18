@@ -1,5 +1,6 @@
 package com.uam.parqueadero.seguridad;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -92,6 +93,19 @@ class AuthControllerTest {
                         .content(cuerpo("fantasma", "x")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.mensaje").value("Usuario o contraseña incorrectos"));
+    }
+
+    /** Seguridad: al iniciar sesión se renueva el identificador, para evitar la fijación de sesión. */
+    @Test
+    void elLoginCambiaElIdentificadorDeLaSesionExistente() throws Exception {
+        MockHttpSession sesion = new MockHttpSession();
+        String antes = sesion.getId();
+
+        mvc.perform(post("/api/auth/login").session(sesion).contentType(MediaType.APPLICATION_JSON)
+                        .content(cuerpo("admin", "clave-admin")))
+                .andExpect(status().isOk());
+
+        assertNotEquals(antes, sesion.getId());
     }
 
     /** CA-8: al cerrar sesión la sesión HTTP queda invalidada. */

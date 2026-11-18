@@ -2,6 +2,8 @@ package com.uam.parqueadero.seguridad;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,6 +37,8 @@ public class AuthController {
     /** Mensaje único para credenciales inválidas: no revela si falló el usuario o la contraseña. */
     static final String MENSAJE_CREDENCIALES = "Usuario o contraseña incorrectos";
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository contextoRepository = new HttpSessionSecurityContextRepository();
 
@@ -54,12 +58,18 @@ public class AuthController {
             Authentication autenticacion = authenticationManager.authenticate(
                     UsernamePasswordAuthenticationToken.unauthenticated(
                             peticion.usuario().trim(), peticion.contrasena()));
+            // Si ya había una sesión, se cambia su identificador: evita la fijación de sesión
+            if (request.getSession(false) != null) {
+                request.changeSessionId();
+            }
             SecurityContext contexto = SecurityContextHolder.createEmptyContext();
             contexto.setAuthentication(autenticacion);
             SecurityContextHolder.setContext(contexto);
             contextoRepository.saveContext(contexto, request, response);
+            log.info("Inicio de sesión de '{}'", autenticacion.getName());
             return ResponseEntity.ok(aSesion(autenticacion));
         } catch (AuthenticationException e) {
+            log.warn("Inicio de sesión fallido para '{}'", limpiar(peticion.usuario()));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("mensaje", MENSAJE_CREDENCIALES));
         }
@@ -82,6 +92,11 @@ public class AuthController {
     @GetMapping("/yo")
     public UsuarioSesion yo(Authentication autenticacion) {
         return aSesion(autenticacion);
+    }
+
+    /** Quita saltos de línea y otros caracteres de control para que un usuario no falsifique líneas del log. */
+    private static String limpiar(String texto) {
+        return texto == null ? "" : texto.replaceAll("\\p{Cntrl}", "_");
     }
 
     private static UsuarioSesion aSesion(Authentication autenticacion) {
