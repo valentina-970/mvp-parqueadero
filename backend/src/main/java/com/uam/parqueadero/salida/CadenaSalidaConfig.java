@@ -8,9 +8,10 @@ import org.springframework.context.annotation.Configuration;
 public class CadenaSalidaConfig {
 
     @Bean
-    PasoSalida cadenaSalida(ClasificadorPlacas clasificador) {
+    PasoSalida cadenaSalida(ClasificadorPlacas clasificador, Estancias estancias) {
         PasoSalida primero = new ValidarPlacaPaso(clasificador);
-        // Los pasos siguientes se enlazan aquí: primero.enlazar(...).enlazar(...)
+        primero.enlazar(new VerificarIngresoPaso(estancias));
+        // Los pasos siguientes se enlazan aquí, a continuación del último
         return primero;
     }
 }

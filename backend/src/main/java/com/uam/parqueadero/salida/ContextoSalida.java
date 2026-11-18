@@ -2,6 +2,7 @@ package com.uam.parqueadero.salida;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Datos que recorren la cadena de validaciones de la salida. Cada paso lee lo que
@@ -12,13 +13,16 @@ public class ContextoSalida {
     private final SolicitudSalida solicitud;
     private final Instant ahora;
     private final String placa;
+    private final UUID sedeId;
     private TipoVehiculoDetectado tipo;
+    private EstanciaAbierta estancia;
     private String motivoRechazo;
     private BigDecimal valorPendiente;
 
-    public ContextoSalida(SolicitudSalida solicitud, String placaNormalizada, Instant ahora) {
+    public ContextoSalida(SolicitudSalida solicitud, String placaNormalizada, UUID sedeId, Instant ahora) {
         this.solicitud = solicitud;
         this.placa = placaNormalizada;
+        this.sedeId = sedeId;
         this.ahora = ahora;
     }
 
@@ -31,6 +35,10 @@ public class ContextoSalida {
         return placa;
     }
 
+    public UUID sedeId() {
+        return sedeId;
+    }
+
     public Instant ahora() {
         return ahora;
     }
@@ -41,6 +49,15 @@ public class ContextoSalida {
 
     public void tipo(TipoVehiculoDetectado tipo) {
         this.tipo = tipo;
+    }
+
+    /** Estancia abierta del vehículo; la deja el paso que verifica el ingreso. */
+    public EstanciaAbierta estancia() {
+        return estancia;
+    }
+
+    public void estancia(EstanciaAbierta estancia) {
+        this.estancia = estancia;
     }
 
     public BigDecimal valorPendiente() {

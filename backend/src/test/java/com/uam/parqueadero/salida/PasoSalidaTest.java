@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +36,7 @@ class PasoSalidaTest {
     }
 
     private ContextoSalida contexto() {
-        return new ContextoSalida(new SolicitudSalida("ABC123", BigDecimal.ONE), "ABC123", Instant.now());
+        return new ContextoSalida(new SolicitudSalida("ABC123", BigDecimal.ONE), "ABC123", UUID.randomUUID(), Instant.now());
     }
 
     @Test

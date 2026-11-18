@@ -5,6 +5,7 @@ import java.time.Clock;
 import org.springframework.stereotype.Service;
 
 import com.uam.parqueadero.comun.Placa;
+import com.uam.parqueadero.comun.SedeActual;
 
 /**
  * Fachada del carril de salida (patrón Facade): una sola operación que orquesta la
@@ -15,17 +16,19 @@ import com.uam.parqueadero.comun.Placa;
 public class OperacionCarrilSalida {
 
     private final PasoSalida cadena;
+    private final SedeActual sede;
     private final Clock reloj;
 
-    public OperacionCarrilSalida(PasoSalida cadena, Clock reloj) {
+    public OperacionCarrilSalida(PasoSalida cadena, SedeActual sede, Clock reloj) {
         this.cadena = cadena;
+        this.sede = sede;
         this.reloj = reloj;
     }
 
     /** Procesa un intento de salida y devuelve la decisión con su motivo. */
     public ResultadoSalida procesar(SolicitudSalida solicitud) {
         ContextoSalida contexto = new ContextoSalida(
-                solicitud, Placa.normalizar(solicitud.placa()), reloj.instant());
+                solicitud, Placa.normalizar(solicitud.placa()), sede.id(), reloj.instant());
 
         cadena.ejecutar(contexto);
 
