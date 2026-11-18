@@ -88,6 +88,11 @@ body {
   color: #842029;
 }
 
+.banner-aviso {
+  background: #fff3cd;
+  color: #8a6100;
+}
+
 /* Barrera simulada */
 .barrera-barra {
   display: inline-block;
