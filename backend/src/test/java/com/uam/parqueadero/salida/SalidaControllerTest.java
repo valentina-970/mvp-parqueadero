@@ -2,12 +2,14 @@ package com.uam.parqueadero.salida;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,9 @@ class SalidaControllerTest {
 
     @MockitoBean
     private UserDetailsService usuarios;
+
+    @MockitoBean
+    private UltimaSalida ultimaSalida;
 
     private static final String CUERPO_VALIDO = "{\"placa\":\"ABC123\",\"confianza\":0.95}";
 
@@ -64,6 +69,28 @@ class SalidaControllerTest {
         mvc.perform(post("/api/salida").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"placa\":\"ABC123\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "OPERADOR")
+    void laUltimaSalidaSeConsultaParaLaPantalla() throws Exception {
+        when(ultimaSalida.ultima()).thenReturn(Optional.of(new ResultadoSalida(
+                false, "Cobro pendiente por $5.000", "ABC123", "Carro", new BigDecimal("5000"),
+                EstadoBarrera.CERRADA, new BigDecimal("0.97"), Instant.now())));
+
+        mvc.perform(get("/api/salida/ultima"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.abre").value(false))
+                .andExpect(jsonPath("$.motivo").value("Cobro pendiente por $5.000"))
+                .andExpect(jsonPath("$.barrera").value("CERRADA"));
+    }
+
+    @Test
+    @WithMockUser(roles = "OPERADOR")
+    void sinLecturasLaUltimaSalidaResponde204() throws Exception {
+        when(ultimaSalida.ultima()).thenReturn(Optional.empty());
+
+        mvc.perform(get("/api/salida/ultima")).andExpect(status().isNoContent());
     }
 
     @Test
