@@ -26,8 +26,10 @@ public class EstanciasJdbc implements Estancias {
 
     @Override
     public Optional<EstanciaAbierta> buscarAbierta(UUID sedeId, String placa) {
+        // FOR UPDATE bloquea la fila: dos salidas simultáneas de la misma placa se atienden una tras otra,
+        // y la segunda ya no encuentra la estancia abierta.
         return jdbc.query(
-                "SELECT id, ingreso_en FROM estancia WHERE sede_id = ? AND placa = ? AND salida_en IS NULL",
+                "SELECT id, ingreso_en FROM estancia WHERE sede_id = ? AND placa = ? AND salida_en IS NULL FOR UPDATE",
                 (rs, fila) -> new EstanciaAbierta(
                         rs.getObject("id", UUID.class),
                         rs.getObject("ingreso_en", OffsetDateTime.class).toInstant()),

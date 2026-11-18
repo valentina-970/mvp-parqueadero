@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.uam.parqueadero.comun.DiaOperativo;
 import com.uam.parqueadero.comun.Placa;
@@ -54,10 +56,8 @@ public class OperacionCarrilSalida {
 
         if (abre) {
             estancias.cerrar(contexto.estancia().id(), eventoId, contexto.ahora());
-            barrera.abrir();
-        } else {
-            barrera.cerrar();
         }
+        moverBarrera(abre);
 
         return new ResultadoSalida(
                 abre,
@@ -65,9 +65,27 @@ public class OperacionCarrilSalida {
                 contexto.placa(),
                 contexto.tipo() == null ? null : contexto.tipo().nombre(),
                 contexto.valorPendiente(),
-                barrera.estado(),
+                abre ? EstadoBarrera.ABIERTA : EstadoBarrera.CERRADA,
                 solicitud.confianza(),
                 contexto.ahora());
+    }
+
+    /**
+     * Mueve la barrera solo cuando la transacción se confirma: si el guardado falla, la barrera
+     * no debe haber abierto. Sin transacción activa (por ejemplo en las pruebas) se mueve de inmediato.
+     */
+    private void moverBarrera(boolean abrir) {
+        Runnable accion = abrir ? barrera::abrir : barrera::cerrar;
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    accion.run();
+                }
+            });
+        } else {
+            accion.run();
+        }
     }
 
     /** @return el id del evento, o {@code null} si la placa no es válida y no se puede registrar */

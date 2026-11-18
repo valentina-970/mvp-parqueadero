@@ -21,6 +21,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.uam.parqueadero.comun.SedeActual;
 
@@ -135,6 +137,39 @@ class OperacionCarrilSalidaTest {
 
         assertEquals(EstadoBarrera.CERRADA, resultado.barrera());
         verify(estancias, never()).cerrar(any(), any(), any());
+    }
+
+    /** Con transacción activa, la barrera solo abre cuando la transacción se confirma. */
+    @Test
+    void conTransaccionActivaLaBarreraAbreSoloAlConfirmar() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            operacion.procesar(solicitud("XYZ12D"));
+            assertEquals(EstadoBarrera.CERRADA, barrera.estado(), "antes de confirmar no debe abrir");
+
+            for (TransactionSynchronization sincronizacion : TransactionSynchronizationManager.getSynchronizations()) {
+                sincronizacion.afterCommit();
+            }
+            assertEquals(EstadoBarrera.ABIERTA, barrera.estado());
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    /** Si la transacción se revierte (no hay confirmación), la barrera no abre. */
+    @Test
+    void siLaTransaccionSeRevierteLaBarreraNoAbre() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            operacion.procesar(solicitud("XYZ12D"));
+
+            for (TransactionSynchronization sincronizacion : TransactionSynchronizationManager.getSynchronizations()) {
+                sincronizacion.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
+            }
+            assertEquals(EstadoBarrera.CERRADA, barrera.estado());
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     /** Barrera mínima para las pruebas: guarda su estado, igual que la simulada. */
