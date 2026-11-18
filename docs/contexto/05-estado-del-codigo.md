@@ -43,6 +43,12 @@ mvp-parqueadero/
   - **`config/SecurityConfig`:** `/api/health`, el login y Swagger son públicos; `/api/admin/**` exige rol ADMINISTRADOR; el resto exige sesión. Sin sesión responde 401 y con rol insuficiente 403, ambos en JSON. CSRF desactivado y CORS con credenciales desde `http://localhost:5173`. Define `PasswordEncoder` (BCrypt) y `AuthenticationManager`.
   - **`config/UsuariosIniciales`:** `ApplicationRunner` que, al arrancar, crea `admin` (ADMINISTRADOR) y `operador1` (OPERADOR) si no existen, con las contraseñas del entorno guardadas con BCrypt, usando `UsuarioRepository`. Si falta una contraseña, no crea el usuario y avisa en el log.
   - `controller/AdminTarifasController` es un marcador solo para administradores; HU-08 lo reemplaza.
+- **Carril de salida (HU-04):** paquete `salida/`. `POST /api/salida` recibe `{placa, confianza}` y responde `{abre, motivo, barrera, ...}`; `GET /api/salida/ultima` devuelve el último intento (204 si no hay) para la pantalla del operador.
+  - **Facade:** `OperacionCarrilSalida` es la única operación que usa el controlador: normaliza la placa, ejecuta la cadena, registra el evento, cierra la estancia y mueve la barrera, todo en una transacción.
+  - **Chain of Responsibility:** `PasoSalida` y sus pasos `ValidarPlacaPaso` → `VerificarIngresoPaso` → `VerificarDeudaPaso` (RN-06), armados en `CadenaSalidaConfig`. Una regla nueva (cupo, confianza de HU-06) es un paso más, sin tocar los demás.
+  - **Puertos (principios D e I):** `ClasificadorPlacas`, `Estancias`, `CobrosDelDia` (solo lectura), `RegistroEventos` y `Barrera`. Sus adaptadores están en `salida/infraestructura/` (JDBC y `BarreraSimulada`). Leen y escriben las tablas del esquema, así que no chocan con las entidades que creen HU-01 y HU-02; si esas historias ofrecen sus propios repositorios, solo se cambia el adaptador.
+  - **Reutilizable por todos (`comun/`):** `Placa.normalizar`, `DiaOperativo.de` (06:00–05:59), `Dinero.formatear`, el puerto `SedeActual` y el bean `Clock` de `config/RelojConfig` (zona America/Bogota).
+  - Una placa con formato inválido se rechaza sin registrar evento, porque `evento_acceso` exige el tipo de vehículo. El cupo se libera al cerrar la estancia, ya que los cupos ocupados son las estancias abiertas.
 - **Swagger:** springdoc en `/swagger-ui.html` y `/v3/api-docs`. Todo endpoint nuevo se documenta con `@Tag` y `@Operation`.
 - **`controller/HealthController`:** `GET /api/health` responde `{"estado":"ok"}`.
 - **`application.yml`:** toda la configuración sale de variables de entorno, con valores por defecto para desarrollo local.
@@ -63,7 +69,8 @@ El archivo `.env` es local y **no se sube**; `.env.example` documenta las variab
 
 - **React con Vite, JavaScript** (no TypeScript), con React-Bootstrap, Bootstrap, React Router y ESLint.
 - **Rutas:** `/login`, `/entrada`, `/salida`, `/administracion` y `/consultas`. Hoy solo `/login` tiene interfaz completa; las demás son marcadores (`components/Pagina`) pendientes de cada historia.
-- **`components/Navegacion`:** barra superior con los enlaces a las pantallas.
+- **Componentes compartidos según los mockups:** `PlacaVisual` (placa amarilla), `BannerResultado` (verde/rojo), `IndicadorBarrera`. Están pensados para que los usen las demás pantallas.
+- **`pages/Salida`:** carril de salida (`components/CarrilSalida`, consulta `/api/salida/ultima` cada 2 segundos) y, a la derecha, el espacio de la caja que implementa HU-03.
 - **`pages/Login`:** inicio de sesión real contra `/api/auth/login`, según el mockup (mensaje de error genérico).
 - **`auth/`:** `AuthProvider` guarda el usuario de la sesión (la recupera con `/api/auth/yo` al abrir la app) y ofrece `iniciarSesion` y `cerrarSesion`; `useAuth` lo expone a los componentes.
 - **`components/RutaProtegida`:** sin sesión lleva a `/login`; con rol insuficiente (por ejemplo, un operador en `/administracion`) vuelve a `/entrada`. **`components/Navegacion`** solo muestra Administración al administrador, el usuario y su rol, y "Cerrar sesión".
@@ -118,5 +125,5 @@ No corras `npm run dev` y el contenedor `frontend` a la vez: usan el mismo puert
 
 - Falta el pipeline de integración continua que corre las pruebas en cada pull request (TT-06).
 - Las pruebas unitarias cubren por ahora HU-05; `ParqueaderoApplicationTests` (arranque completo) necesita la base de datos levantada.
-- Las historias HU-01 a HU-04 y HU-06 a HU-09 y la vista de la sede (TT-09) no están implementadas.
+- Las historias HU-01 a HU-03 y HU-06 a HU-09 y la vista de la sede (TT-09) no están implementadas.
 - Una migración ya aplicada no se edita: los cambios al esquema van en `V3__...` en adelante.

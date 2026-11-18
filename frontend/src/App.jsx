@@ -4,6 +4,7 @@ import Navegacion from './components/Navegacion.jsx';
 import Pagina from './components/Pagina.jsx';
 import RutaProtegida from './components/RutaProtegida.jsx';
 import Login from './pages/Login.jsx';
+import Salida from './pages/Salida.jsx';
 
 /** Pantalla con la barra superior; el login se muestra sin ella. */
 function ConBarra({ roles, children }) {
@@ -21,7 +22,7 @@ export default function App() {
       <Route path="/" element={<Navigate to="/entrada" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/entrada" element={<ConBarra><Pagina titulo="Carril de entrada" /></ConBarra>} />
-      <Route path="/salida" element={<ConBarra><Pagina titulo="Salida y caja" /></ConBarra>} />
+      <Route path="/salida" element={<ConBarra><Salida /></ConBarra>} />
       <Route path="/consultas" element={<ConBarra><Pagina titulo="Consultas" /></ConBarra>} />
       <Route
         path="/administracion"
