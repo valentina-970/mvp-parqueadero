@@ -34,7 +34,7 @@ public class OperacionCarrilSalida {
 
         return new ResultadoSalida(
                 !contexto.rechazada(),
-                contexto.rechazada() ? contexto.motivoRechazo() : "Salida autorizada",
+                contexto.rechazada() ? contexto.motivoRechazo() : contexto.motivoAutorizacion(),
                 contexto.placa(),
                 contexto.tipo() == null ? null : contexto.tipo().nombre(),
                 contexto.valorPendiente(),

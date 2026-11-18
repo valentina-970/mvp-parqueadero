@@ -17,6 +17,7 @@ public class ContextoSalida {
     private TipoVehiculoDetectado tipo;
     private EstanciaAbierta estancia;
     private String motivoRechazo;
+    private String motivoAutorizacion = "Salida autorizada";
     private BigDecimal valorPendiente;
 
     public ContextoSalida(SolicitudSalida solicitud, String placaNormalizada, UUID sedeId, Instant ahora) {
@@ -66,6 +67,15 @@ public class ContextoSalida {
 
     public void valorPendiente(BigDecimal valorPendiente) {
         this.valorPendiente = valorPendiente;
+    }
+
+    /** Deja el motivo con el que se autoriza la salida (por ejemplo "Cobro del día pagado"). */
+    public void autorizar(String motivo) {
+        this.motivoAutorizacion = motivo;
+    }
+
+    public String motivoAutorizacion() {
+        return motivoAutorizacion;
     }
 
     /** Marca la salida como rechazada; la cadena se detiene en el paso que llama a este método. */
