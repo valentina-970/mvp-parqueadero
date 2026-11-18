@@ -1,47 +1,66 @@
-import { useEffect, useState } from 'react';
-import { Card, Form, Button, Badge } from 'react-bootstrap';
-import { get } from '../services/api.js';
+import { useState } from 'react';
+import { Card, Form, Button, Alert } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/useAuth.js';
 
+/** Pantalla de inicio de sesión (HU-05). */
 export default function Login() {
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
-  const [api, setApi] = useState('verificando');
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const { iniciarSesion } = useAuth();
+  const navegar = useNavigate();
 
-  useEffect(() => {
-    get('/api/health')
-      .then(() => setApi('conectada'))
-      .catch(() => setApi('sin conexión'));
-  }, []);
-
-  const enviar = (evento) => {
+  const enviar = async (evento) => {
     evento.preventDefault();
-    // La autenticación real se implementa en HU-05.
-    console.log('Pendiente HU-05', usuario);
+    setError('');
+    setEnviando(true);
+    try {
+      await iniciarSesion(usuario.trim(), contrasena);
+      navegar('/entrada', { replace: true });
+    } catch (e) {
+      // El servidor responde un mensaje genérico para no revelar qué dato falló
+      setError(e.estado === 401 ? e.message : 'No se pudo conectar con el servidor');
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
-    <Card style={{ maxWidth: 400 }} className="mx-auto">
-      <Card.Body>
-        <Card.Title>Iniciar sesión</Card.Title>
-        <Form onSubmit={enviar}>
-          <Form.Group className="mb-3" controlId="usuario">
-            <Form.Label>Usuario</Form.Label>
-            <Form.Control value={usuario} onChange={(e) => setUsuario(e.target.value)} />
-          </Form.Group>
-          <Form.Group className="mb-3" controlId="contrasena">
-            <Form.Label>Contraseña</Form.Label>
-            <Form.Control
-              type="password"
-              value={contrasena}
-              onChange={(e) => setContrasena(e.target.value)}
-            />
-          </Form.Group>
-          <Button type="submit" className="w-100">Entrar</Button>
-        </Form>
-        <div className="mt-3 text-end">
-          <Badge bg={api === 'conectada' ? 'success' : 'secondary'}>API: {api}</Badge>
-        </div>
-      </Card.Body>
-    </Card>
+    <div className="login-pantalla">
+      <Card className="login-tarjeta">
+        <Card.Body>
+          <h1 className="h4 fw-bold mb-1">Parqueadero MVP</h1>
+          <p className="text-secondary mb-3">Inicia sesión para continuar</p>
+          <Form onSubmit={enviar}>
+            <Form.Group className="mb-3" controlId="usuario">
+              <Form.Label className="small">Usuario</Form.Label>
+              <Form.Control
+                value={usuario}
+                onChange={(e) => setUsuario(e.target.value)}
+                autoComplete="username"
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="contrasena">
+              <Form.Label className="small">Contraseña</Form.Label>
+              <Form.Control
+                type="password"
+                value={contrasena}
+                onChange={(e) => setContrasena(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </Form.Group>
+            {error && <Alert variant="danger" className="py-2 small">{error}</Alert>}
+            <Button type="submit" className="w-100" disabled={enviando}>
+              {enviando ? 'Ingresando…' : 'Ingresar'}
+            </Button>
+          </Form>
+          <p className="text-secondary small mt-3 mb-0">Acceso para operador y administrador</p>
+        </Card.Body>
+      </Card>
+    </div>
   );
 }
