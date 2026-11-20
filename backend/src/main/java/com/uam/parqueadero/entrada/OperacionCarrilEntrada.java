@@ -69,7 +69,7 @@ public class OperacionCarrilEntrada {
                 UUID estanciaId = estancias.abrir(
                         contexto.sedeId(), contexto.placa(), contexto.tipo().id(), eventoId, contexto.ahora());
                 publicador.publishEvent(new IngresoRegistrado(
-                        estanciaId, contexto.sedeId(), contexto.placa(), contexto.tipo().id(),
+                        estanciaId, eventoId, contexto.sedeId(), contexto.placa(), contexto.tipo().id(),
                         contexto.ahora(), dia));
             }
         }
