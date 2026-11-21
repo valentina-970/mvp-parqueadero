@@ -14,7 +14,7 @@ public record NuevoCobro(
     UUID tarifaId,
     BigDecimal valor,
     UUID ingresoEventoId,
-    Instant ingresoEn
+    Instant creadoEn
 ) {
 
 }
