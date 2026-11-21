@@ -38,17 +38,20 @@ mvp-parqueadero/
 - Dependencias: Spring Web, Spring Data JPA, PostgreSQL Driver, Flyway, Spring Security y Validation.
 - **Base de datos:** PostgreSQL 16. El esquema lo crea Flyway al arrancar; Hibernate solo valida (`ddl-auto: validate`). El detalle de las tablas está en `04-base-de-datos.md`.
 - **Migraciones:** `V1__esquema_inicial.sql` (11 tablas) y `V2__datos_iniciales.sql` (sede "Principal", tipos CARRO y MOTO con su patrón de placa, franjas DIURNA y NOCTURNA, tarifas, cupos de 40 carros y 20 motos, y el parámetro `umbral_confianza` = 0.80).
+
 - **Acceso por roles (HU-05):** sesión HTTP con cookie. `usuario/` tiene `Rol`, la entidad `Usuario` y `UsuarioRepository`; `seguridad/` tiene `UsuarioDetailsService` (carga el usuario para Spring Security) y `AuthController`.
   - `POST /api/auth/login` (usuario y contraseña; 401 con "Usuario o contraseña incorrectos"), `POST /api/auth/logout` y `GET /api/auth/yo` (usuario y rol de la sesión).
   - **`config/SecurityConfig`:** `/api/health`, el login y Swagger son públicos; `/api/admin/**` exige rol ADMINISTRADOR; el resto exige sesión. Sin sesión responde 401 y con rol insuficiente 403, ambos en JSON. CSRF desactivado y CORS con credenciales desde `http://localhost:5173`. Define `PasswordEncoder` (BCrypt) y `AuthenticationManager`.
   - **`config/UsuariosIniciales`:** `ApplicationRunner` que, al arrancar, crea `admin` (ADMINISTRADOR) y `operador1` (OPERADOR) si no existen, con las contraseñas del entorno guardadas con BCrypt, usando `UsuarioRepository`. Si falta una contraseña, no crea el usuario y avisa en el log.
   - `controller/AdminTarifasController` es un marcador solo para administradores; HU-08 lo reemplaza.
+
 - **Carril de salida (HU-04):** paquete `salida/`. `POST /api/salida` recibe `{placa, confianza}` y responde `{abre, motivo, barrera, ...}`; `GET /api/salida/ultima` devuelve el último intento (204 si no hay) para la pantalla del operador.
   - **Facade:** `OperacionCarrilSalida` es la única operación que usa el controlador: normaliza la placa, ejecuta la cadena, registra el evento, cierra la estancia y mueve la barrera, todo en una transacción.
   - **Chain of Responsibility:** `PasoSalida` y sus pasos `ValidarPlacaPaso` → `VerificarIngresoPaso` → `VerificarDeudaPaso` (RN-06), armados en `CadenaSalidaConfig`. Una regla nueva (cupo, confianza de HU-06) es un paso más, sin tocar los demás.
   - **Puertos (principios D e I):** `ClasificadorPlacas`, `Estancias`, `CobrosDelDia` (solo lectura), `RegistroEventos` y `Barrera`. Sus adaptadores están en `salida/infraestructura/` (JDBC y `BarreraSimulada`). Leen y escriben las tablas del esquema, así que no chocan con las entidades que creen HU-01 y HU-02; si esas historias ofrecen sus propios repositorios, solo se cambia el adaptador.
   - **Reutilizable por todos (`comun/`):** `Placa.normalizar`, `DiaOperativo.de` (06:00–05:59), `Dinero.formatear`, el puerto `SedeActual` y el bean `Clock` de `config/RelojConfig` (zona America/Bogota).
   - Una placa con formato inválido se rechaza sin registrar evento, porque `evento_acceso` exige el tipo de vehículo. El cupo se libera al cerrar la estancia, ya que los cupos ocupados son las estancias abiertas.
+
 - **Carril de entrada (HU-01):** paquete `entrada/`. `POST /api/entrada` recibe `{placa, confianza}` y responde `{resultado, motivo, placa, tipoVehiculo, confianza, ocurridoEn}`, con `resultado` = `PERMITIDO`, `PENDIENTE_VALIDACION` o `RECHAZADO`; `GET /api/entrada/ultimo` devuelve la última lectura (204 si no hay) para la pantalla del operador. Responde 400 solo si el cuerpo es inválido (confianza fuera de 0 a 1).
   - **Adapter:** `LectorPlacas` es el puerto del lector; `infraestructura/LectorSimulado` lo implementa y convierte lo que envía el simulador en una `LecturaPlaca` con la placa normalizada. Una cámara real sería otro adaptador (principio L).
   - **Facade:** `OperacionCarrilEntrada` lee la placa, ejecuta la cadena, registra el evento, abre la estancia y publica el aviso, todo en una transacción.
@@ -56,6 +59,13 @@ mvp-parqueadero/
   - **Puertos:** `UmbralConfianza` (lee `parametro.umbral_confianza`, 0,80 si no existe), `EstanciasEntrada` y `EventosEntrada`, con adaptadores JDBC en `entrada/infraestructura/`. Reutiliza `ClasificadorPlacas` y `TipoVehiculoDetectado` del paquete `salida`.
   - **Observer:** un ingreso permitido publica `IngresoRegistrado` (estancia, sede, placa, tipo de vehículo, hora y día operativo). HU-02 lo escucha con `@EventListener` para generar el cobro, sin que el carril la conozca.
   - Placa inválida: se rechaza sin registrar evento (CA-6). Confianza menor que el umbral: se registra el evento como `PENDIENTE_VALIDACION`, sin estancia; HU-06 lo completa. Vehículo con estancia abierta: se rechaza y el intento queda registrado.
+
+- **Generación del cobro (HU-02):** paquete `cobro/`. No tiene endpoint: `GeneradorCobro` escucha `IngresoRegistrado` con `@EventListener` (Observer) dentro de la transacción del ingreso y crea el cobro del día operativo en estado `PENDIENTE`.
+  - **Strategy:** `PoliticaTarifa` calcula la tarifa; la estrategia del MVP es `TarifaPorFranja` (tipo de vehículo y franja de la hora de entrada, con franjas que cruzan la medianoche). Otra forma de cobrar sería otra implementación (principio O).
+  - **Chain of Responsibility:** `PasoCobro` y sus pasos `VerificarCobroDelDiaPaso` → `AplicarTarifaPaso` → `VerificarTarifaCeroPaso`, armados en `CadenaCobroConfig`.
+  - **Puertos:** `TarifasVigentes` y `RegistroCobros`, con adaptadores JDBC en `cobro/infraestructura/`. El cobro guarda el valor y el id de la tarifa (RN-07). La base impide dos cobros por placa, sede y día (`uq_cobro_placa_sede_dia`).
+  - `IngresoRegistrado` ahora incluye `eventoIngresoId`, que el cobro referencia.
+
 - **Swagger:** springdoc en `/swagger-ui.html` y `/v3/api-docs`. Todo endpoint nuevo se documenta con `@Tag` y `@Operation`.
 - **`controller/HealthController`:** `GET /api/health` responde `{"estado":"ok"}`.
 - **`application.yml`:** toda la configuración sale de variables de entorno, con valores por defecto para desarrollo local.
