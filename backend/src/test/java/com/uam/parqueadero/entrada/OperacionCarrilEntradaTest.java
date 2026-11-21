@@ -171,6 +171,7 @@ class OperacionCarrilEntradaTest {
         ArgumentCaptor<IngresoRegistrado> aviso = ArgumentCaptor.forClass(IngresoRegistrado.class);
         verify(publicador).publishEvent(aviso.capture());
         assertEquals(estanciaId, aviso.getValue().estanciaId());
+        assertEquals(eventoId, aviso.getValue().eventoIngresoId());
         assertEquals("ABC123", aviso.getValue().placa());
         assertEquals(carro.id(), aviso.getValue().tipoVehiculoId());
         assertEquals(HOY, aviso.getValue().diaOperativo());
