@@ -31,4 +31,13 @@ class DiaOperativoTest {
         assertEquals("$5.000", Dinero.formatear(new BigDecimal("5000.00")));
         assertEquals("$1.250.000", Dinero.formatear(new BigDecimal("1250000")));
     }
+
+    /** El día operativo termina a las 05:59:59 del día calendario siguiente (RN-03). */
+    @Test
+    void elDiaOperativoTerminaALas0559DelDiaSiguiente() {
+        Instant fin = DiaOperativo.fin(LocalDate.of(2026, 11, 14), ZONA);
+
+        assertEquals(Instant.parse("2026-11-15T10:59:59Z"), fin); // 05:59:59 en Colombia
+        assertEquals(LocalDate.of(2026, 11, 14), DiaOperativo.de(fin, ZONA));
+    }
 }
