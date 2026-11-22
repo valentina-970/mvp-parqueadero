@@ -18,7 +18,9 @@ public interface EstadoDelCobro {
         return switch (nombre) {
             case "PENDIENTE" -> new CobroPendiente();
             case "PAGADO" -> new CobroPagado();
-            default -> new CobroNoPagable(nombre);
+            case "VENCIDO" -> new CobroVencido();
+            case "ANULADO" -> new CobroAnulado();
+            default -> throw new IllegalArgumentException("Estado de cobro desconocido: " + nombre);
         };
     }
 }

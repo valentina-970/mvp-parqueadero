@@ -114,6 +114,18 @@ class CajaControllerTest {
                 .andExpect(jsonPath("$.mensaje").value("No hay cobro pendiente para esta placa"));
     }
 
+    /** CP-03-05 (error): cobro anulado → 409 con el motivo. */
+    @Test
+    @WithMockUser(roles = "OPERADOR")
+    void pagarUnCobroAnuladoResponde409ConElMotivo() throws Exception {
+        when(caja.pagar(any(), any(), any()))
+                .thenThrow(new CobroNoPagableException("El cobro está anulado y no se puede pagar"));
+
+        mvc.perform(post("/api/caja/pagos").contentType(MediaType.APPLICATION_JSON).content(PAGO_VALIDO))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensaje").value("El cobro está anulado y no se puede pagar"));
+    }
+
     @Test
     @WithMockUser(roles = "OPERADOR")
     void sinValorRecibidoResponde400() throws Exception {
