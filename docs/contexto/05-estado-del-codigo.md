@@ -98,6 +98,17 @@ El archivo `.env` es local y **no se sube**; `.env.example` documenta las variab
   - Desarrollo (`npm run dev`): `VITE_API_URL=http://localhost:8080`.
   - Docker: la API se llama por ruta relativa (`/api`) y Nginx la reenvía al backend. Así funciona igual desde el portátil y desde el celular del simulador.
 
+## Integración continua (TT-06)
+
+`.github/workflows/ci.yml` corre en cada pull request hacia `develop` o `main` y tiene dos trabajos:
+
+| Trabajo | Qué hace |
+|---|---|
+| `backend` | Levanta un PostgreSQL 16 descartable, instala Java 21 y ejecuta `./mvnw -B verify` (todas las pruebas, incluido el arranque completo, y el empaquetado). Guarda el informe de pruebas como artefacto. |
+| `frontend` | Instala Node 24 y ejecuta `npm ci`, `npm run lint` y `npm run build`. |
+
+Las credenciales de la base y de los usuarios son valores de prueba escritos en el workflow: la base existe solo mientras corre el pipeline y no es un secreto real. Para que el pipeline bloquee los merge con pruebas rotas, en GitHub hay que marcar los trabajos `backend` y `frontend` como obligatorios en la protección de `develop` y `main` (Settings → Branches).
+
 ## Docker Compose
 
 Tres servicios:
@@ -141,7 +152,6 @@ No corras `npm run dev` y el contenedor `frontend` a la vez: usan el mismo puert
 
 ## Pendientes técnicos conocidos
 
-- Falta el pipeline de integración continua que corre las pruebas en cada pull request (TT-06).
-- Las pruebas unitarias cubren HU-01, HU-04 y HU-05; `ParqueaderoApplicationTests` (arranque completo) necesita la base de datos levantada y el `.env` cargado en la terminal.
-- Las historias HU-02, HU-03, HU-06 a HU-09 y la vista de la sede (TT-09) no están implementadas.
+- `ParqueaderoApplicationTests` (arranque completo) necesita la base de datos levantada y las variables del `.env` en la terminal; en el pipeline las pone el propio workflow.
+- Las historias HU-03 y HU-06 a HU-09 y la vista de la sede (TT-09) no están implementadas.
 - Una migración ya aplicada no se edita: los cambios al esquema van en `V3__...` en adelante.
