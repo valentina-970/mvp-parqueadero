@@ -1,9 +1,10 @@
-import { Row, Col, Card } from 'react-bootstrap';
+import { Row, Col } from 'react-bootstrap';
 import CarrilSalida from '../components/CarrilSalida.jsx';
+import CajaPago from '../components/CajaPago.jsx';
 
 /**
- * Salida y caja. A la izquierda el carril de salida (HU-04); a la derecha irá la caja
- * para registrar el pago (HU-03).
+ * Salida y caja. A la izquierda el carril de salida (HU-04); a la derecha la caja para
+ * registrar el pago en efectivo (HU-03).
  */
 export default function Salida() {
   return (
@@ -15,13 +16,7 @@ export default function Salida() {
           <CarrilSalida />
         </Col>
         <Col lg={5}>
-          {/* Marcador: la caja la implementa HU-03 */}
-          <Card>
-            <Card.Body>
-              <Card.Title className="h6 fw-bold">Caja · Registrar pago</Card.Title>
-              <p className="text-secondary mb-0">Pantalla pendiente de implementar.</p>
-            </Card.Body>
-          </Card>
+          <CajaPago />
         </Col>
       </Row>
     </>
