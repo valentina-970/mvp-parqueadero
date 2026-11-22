@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Form, Button, Alert } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth.js';
 
 /** Pantalla de inicio de sesión (HU-05). */
@@ -11,6 +11,7 @@ export default function Login() {
   const [enviando, setEnviando] = useState(false);
   const { iniciarSesion } = useAuth();
   const navegar = useNavigate();
+  const ubicacion = useLocation();
 
   const enviar = async (evento) => {
     evento.preventDefault();
@@ -18,7 +19,8 @@ export default function Login() {
     setEnviando(true);
     try {
       await iniciarSesion(usuario.trim(), contrasena);
-      navegar('/entrada', { replace: true });
+      // Si venía de otra pantalla (por ejemplo el simulador), vuelve a ella
+      navegar(ubicacion.state?.desde ?? '/entrada', { replace: true });
     } catch (e) {
       // El servidor responde un mensaje genérico para no revelar qué dato falló
       setError(e.estado === 401 ? e.message : 'No se pudo conectar con el servidor');
