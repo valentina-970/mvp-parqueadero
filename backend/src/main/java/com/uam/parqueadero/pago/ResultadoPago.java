@@ -10,4 +10,8 @@ public record ResultadoPago(Pago pago, boolean nuevo) {
     static ResultadoPago creado(Pago pago) {
         return new ResultadoPago(pago, true);
     }
+
+    static ResultadoPago existente(Pago pago) {
+        return new ResultadoPago(pago, false);
+    }
 }

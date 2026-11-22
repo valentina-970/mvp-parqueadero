@@ -127,4 +127,20 @@ class CajaControllerTest {
         mvc.perform(post("/api/caja/pagos").contentType(MediaType.APPLICATION_JSON).content(PAGO_VALIDO))
                 .andExpect(status().isUnauthorized());
     }
+
+    /** CP-03-02 (éxito): si el cobro ya estaba pagado se responde 200 con el pago existente. */
+    @Test
+    @WithMockUser(username = "operador2", roles = "OPERADOR")
+    void repetirElPagoResponde200ConElPagoExistente() throws Exception {
+        Pago pago = new Pago(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("5000.00"),
+                new BigDecimal("10000"), new BigDecimal("5000.00"), UUID.randomUUID(), "operador1",
+                Instant.parse("2026-11-14T15:15:00Z"), Instant.parse("2026-11-15T10:59:59Z"));
+        when(caja.pagar(any(), any(), any()))
+                .thenReturn(new PagoDeCaja("ABC123", new ResultadoPago(pago, false)));
+
+        mvc.perform(post("/api/caja/pagos").contentType(MediaType.APPLICATION_JSON).content(PAGO_VALIDO))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recibidoPor").value("operador1"))
+                .andExpect(jsonPath("$.estadoCobro").value("PAGADO"));
+    }
 }

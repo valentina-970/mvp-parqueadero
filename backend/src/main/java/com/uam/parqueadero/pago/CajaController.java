@@ -37,12 +37,15 @@ public class CajaController {
 
     /** Registra el pago en efectivo; el operador es el usuario de la sesión. */
     @Operation(summary = "Registrar el pago en efectivo",
-            description = "201 con el pago y el cambio. 422 si el efectivo no alcanza, 409 si el cobro "
+            description = "201 con el pago y el cambio. Si el cobro ya estaba pagado responde 200 con el "
+                    + "pago existente, sin crear otro. 422 si el efectivo no alcanza, 409 si el cobro "
                     + "no se puede pagar y 404 si la placa no tiene cobro.")
     @PostMapping("/pagos")
     public ResponseEntity<PagoRegistrado> pagar(@Valid @RequestBody SolicitudPago solicitud,
                                                 Authentication operador) {
         PagoDeCaja pago = caja.pagar(solicitud.placa(), solicitud.valorRecibido(), operador.getName());
-        return ResponseEntity.status(HttpStatus.CREATED).body(PagoRegistrado.de(pago));
+        // 201 si el pago se acaba de crear; 200 si el cobro ya estaba pagado y se devuelve el existente
+        HttpStatus estado = pago.resultado().nuevo() ? HttpStatus.CREATED : HttpStatus.OK;
+        return ResponseEntity.status(estado).body(PagoRegistrado.de(pago));
     }
 }

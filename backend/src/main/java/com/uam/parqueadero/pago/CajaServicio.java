@@ -52,7 +52,9 @@ public class CajaServicio {
      */
     @Transactional
     public PagoDeCaja pagar(String placaLeida, BigDecimal valorRecibido, String nombreOperador) {
-        CobroPorPagar cobro = buscarCobro(placaLeida);
+        // Se bloquea el cobro: así repetir o simultanear el pago nunca crea un segundo pago (CA-6)
+        CobroPorPagar cobro = buscador.buscarParaPagar(sede.id(), Placa.normalizar(placaLeida), diaOperativoActual())
+                .orElseThrow(CobroNoEncontradoException::new);
         DatosPago datos = new DatosPago(
                 valorRecibido, operadores.idDe(nombreOperador), nombreOperador, reloj.instant(), reloj.getZone());
 

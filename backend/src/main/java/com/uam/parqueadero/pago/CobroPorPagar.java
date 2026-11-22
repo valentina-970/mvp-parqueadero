@@ -19,6 +19,7 @@ public class CobroPorPagar {
     private final String franja;
     private final BigDecimal valor;
     private EstadoDelCobro estado;
+    private Pago pagoRegistrado;
 
     /**
      * @param tipoVehiculo nombre del tipo de vehículo (por ejemplo "Carro")
@@ -76,8 +77,25 @@ public class CobroPorPagar {
         return estado.pagar(this, datos);
     }
 
+    /** Pago que ya tiene el cobro, o {@code null} si todavía no se ha pagado. */
+    Pago pagoRegistrado() {
+        return pagoRegistrado;
+    }
+
     /** Lo llama el estado cuando el cobro cambia de estado. */
     void cambiarEstado(EstadoDelCobro nuevo) {
         this.estado = nuevo;
+    }
+
+    /** Lo llama el estado PENDIENTE al cobrar: el cobro pasa a PAGADO y recuerda su pago. */
+    void marcarPagado(Pago pago) {
+        this.pagoRegistrado = pago;
+        cambiarEstado(new CobroPagado());
+    }
+
+    /** Lo usa el adaptador de la base al cargar un cobro que ya está pagado. */
+    public CobroPorPagar conPago(Pago pago) {
+        this.pagoRegistrado = pago;
+        return this;
     }
 }

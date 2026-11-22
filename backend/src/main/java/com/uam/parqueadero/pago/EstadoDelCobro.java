@@ -15,6 +15,10 @@ public interface EstadoDelCobro {
 
     /** Crea el estado que corresponde al nombre guardado en la base. */
     static EstadoDelCobro desde(String nombre) {
-        return "PENDIENTE".equals(nombre) ? new CobroPendiente() : new CobroNoPagable(nombre);
+        return switch (nombre) {
+            case "PENDIENTE" -> new CobroPendiente();
+            case "PAGADO" -> new CobroPagado();
+            default -> new CobroNoPagable(nombre);
+        };
     }
 }

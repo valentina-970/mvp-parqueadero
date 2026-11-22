@@ -27,7 +27,7 @@ public class CobroPendiente implements EstadoDelCobro {
                 UUID.randomUUID(), cobro.id(), cobro.valor(), datos.valorRecibido(), cambio,
                 datos.operadorId(), datos.operadorNombre(), datos.ahora(),
                 DiaOperativo.fin(cobro.diaOperativo(), datos.zona()));
-        cobro.cambiarEstado(EstadoDelCobro.desde("PAGADO"));
+        cobro.marcarPagado(pago);
         return ResultadoPago.creado(pago);
     }
 }
