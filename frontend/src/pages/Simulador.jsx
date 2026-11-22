@@ -1,0 +1,144 @@
+import { useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
+import { Form, Button, Alert } from 'react-bootstrap';
+import { post } from '../services/api.js';
+import BannerResultado from '../components/BannerResultado.jsx';
+import EscenaSede from '../components/EscenaSede.jsx';
+
+const CARRILES = {
+  salida: { titulo: 'Salida', ruta: '/api/salida' },
+  entrada: { titulo: 'Entrada', ruta: '/api/entrada' },
+};
+
+const EJEMPLOS = { CARRO: 'ABC123', MOTO: 'XYZ12D' };
+
+/**
+ * Convierte la respuesta de cada carril en lo que muestra la pantalla. La salida responde
+ * `abre`; la entrada responde `resultado` (PERMITIDO, PENDIENTE_VALIDACION o RECHAZADO).
+ */
+function interpretar(carril, respuesta) {
+  if (carril === 'salida') {
+    return { abre: respuesta.abre, aviso: false, motivo: respuesta.motivo };
+  }
+  return {
+    abre: respuesta.resultado === 'PERMITIDO',
+    aviso: respuesta.resultado === 'PENDIENTE_VALIDACION',
+    motivo: respuesta.motivo,
+  };
+}
+
+/**
+ * Vista de la sede para el celular (TT-09): simula la cámara de un carril. Se elige el tipo
+ * de vehículo, la placa y la confianza, y se ve si la barrera abre. Rutas:
+ * `/simulador/salida` y `/simulador/entrada`.
+ */
+export default function Simulador() {
+  const { carril } = useParams();
+  const [tipo, setTipo] = useState('CARRO');
+  const [placa, setPlaca] = useState(EJEMPLOS.CARRO);
+  const [confianza, setConfianza] = useState(0.95);
+  const [resultado, setResultado] = useState(null);
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  const configuracion = CARRILES[carril];
+  if (!configuracion) {
+    return <Navigate to="/simulador/salida" replace />;
+  }
+
+  const elegirTipo = (nuevo) => {
+    setTipo(nuevo);
+    // Si la placa es el ejemplo del otro tipo, se cambia por el ejemplo del nuevo
+    if (placa === '' || Object.values(EJEMPLOS).includes(placa)) {
+      setPlaca(EJEMPLOS[nuevo]);
+    }
+  };
+
+  const enviar = async (evento) => {
+    evento.preventDefault();
+    setError('');
+    setEnviando(true);
+    try {
+      const respuesta = await post(configuracion.ruta, { placa, confianza });
+      setResultado({ ...interpretar(carril, respuesta), placa: respuesta.placa });
+    } catch (e) {
+      setResultado(null);
+      setError(e.estado === 400 ? 'Revisa la placa y el nivel de confianza' : e.message);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const abierta = resultado ? resultado.abre : null;
+
+  return (
+    <main className="sede-pantalla">
+      <header className="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <div className="sede-etiqueta">Vista de la sede</div>
+          <h1 className="h5 fw-bold mb-0">Sede Principal · {configuracion.titulo}</h1>
+        </div>
+        <span className="badge-simulador">SIMULADOR</span>
+      </header>
+
+      <EscenaSede placa={resultado?.placa ?? placa} abierta={abierta} />
+
+      <div className="my-3" aria-live="polite">
+        {resultado && (
+          <BannerResultado tipo={resultado.aviso ? 'aviso' : resultado.abre ? 'exito' : 'error'}>
+            {resultado.aviso ? 'VALIDACIÓN MANUAL' : resultado.abre ? 'ABRE' : 'NO ABRE'} · {resultado.motivo}
+          </BannerResultado>
+        )}
+      </div>
+
+      <Form onSubmit={enviar} className="sede-formulario">
+        <Form.Label className="small mb-1">Tipo de vehículo</Form.Label>
+        <div className="d-flex gap-2 mb-3">
+          {[['CARRO', 'Carro'], ['MOTO', 'Moto']].map(([valor, etiqueta]) => (
+            <Button
+              key={valor}
+              type="button"
+              variant={tipo === valor ? 'primary' : 'light'}
+              className="rounded-pill px-3"
+              aria-pressed={tipo === valor}
+              onClick={() => elegirTipo(valor)}
+            >
+              {etiqueta}
+            </Button>
+          ))}
+        </div>
+
+        <Form.Group className="mb-3" controlId="sede-placa">
+          <Form.Label className="small mb-1">Placa</Form.Label>
+          <Form.Control
+            value={placa}
+            onChange={(e) => setPlaca(e.target.value.toUpperCase())}
+            placeholder={tipo === 'MOTO' ? 'Ej.: XYZ12D' : 'Ej.: ABC123'}
+            autoCapitalize="characters"
+            autoComplete="off"
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3" controlId="sede-confianza">
+          <Form.Label className="small d-flex justify-content-between mb-1">
+            <span>Nivel de confianza</span>
+            <strong className="text-primary">{Math.round(confianza * 100)} %</strong>
+          </Form.Label>
+          <Form.Range
+            min={0}
+            max={1}
+            step={0.01}
+            value={confianza}
+            onChange={(e) => setConfianza(Number(e.target.value))}
+          />
+        </Form.Group>
+
+        {error && <Alert variant="danger" className="py-2 small">{error}</Alert>}
+        <Button type="submit" className="w-100" disabled={enviando}>
+          {enviando ? 'Enviando…' : 'Enviar lectura'}
+        </Button>
+      </Form>
+    </main>
+  );
+}
