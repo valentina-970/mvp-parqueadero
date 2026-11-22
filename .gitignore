@@ -29,3 +29,5 @@ dist/
 .idea/
 .vscode/
 *.log
+# Archivos locales de Claude Code
+.claude/
