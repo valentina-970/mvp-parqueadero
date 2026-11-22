@@ -16,6 +16,16 @@ public class ErroresCajaAdvice {
         return respuesta(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
+    @ExceptionHandler(ValorInsuficienteException.class)
+    ResponseEntity<Map<String, String>> insuficiente(ValorInsuficienteException e) {
+        return respuesta(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+    }
+
+    @ExceptionHandler(CobroNoPagableException.class)
+    ResponseEntity<Map<String, String>> noPagable(CobroNoPagableException e) {
+        return respuesta(HttpStatus.CONFLICT, e.getMessage());
+    }
+
     private static ResponseEntity<Map<String, String>> respuesta(HttpStatus estado, String mensaje) {
         return ResponseEntity.status(estado).body(Map.of("mensaje", mensaje));
     }

@@ -1,11 +1,15 @@
 package com.uam.parqueadero.pago;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -13,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -63,5 +68,63 @@ class CajaControllerTest {
     @Test
     void sinSesionResponde401() throws Exception {
         mvc.perform(get("/api/caja/cobros/ABC123")).andExpect(status().isUnauthorized());
+    }
+
+    private static final String PAGO_VALIDO = "{\"placa\":\"ABC123\",\"valorRecibido\":10000}";
+
+    /** CP-03-01 (éxito): el pago responde 201 con el cambio y el pase vigente. */
+    @Test
+    @WithMockUser(username = "operador1", roles = "OPERADOR")
+    void registrarElPagoResponde201ConElCambio() throws Exception {
+        Pago pago = new Pago(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("5000.00"),
+                new BigDecimal("10000"), new BigDecimal("5000.00"), UUID.randomUUID(), "operador1",
+                Instant.parse("2026-11-14T15:15:00Z"), Instant.parse("2026-11-15T10:59:59Z"));
+        when(caja.pagar(eq("ABC123"), any(), eq("operador1")))
+                .thenReturn(new PagoDeCaja("ABC123", new ResultadoPago(pago, true)));
+
+        mvc.perform(post("/api/caja/pagos").contentType(MediaType.APPLICATION_JSON).content(PAGO_VALIDO))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.placa").value("ABC123"))
+                .andExpect(jsonPath("$.cambio").value(5000.00))
+                .andExpect(jsonPath("$.estadoCobro").value("PAGADO"))
+                .andExpect(jsonPath("$.recibidoPor").value("operador1"))
+                .andExpect(jsonPath("$.paseVigenteHasta").exists());
+    }
+
+    /** CP-03-04 (error): efectivo insuficiente → 422 con el mensaje. */
+    @Test
+    @WithMockUser(roles = "OPERADOR")
+    void conEfectivoInsuficienteResponde422() throws Exception {
+        when(caja.pagar(any(), any(), any()))
+                .thenThrow(new ValorInsuficienteException(new BigDecimal("2000")));
+
+        mvc.perform(post("/api/caja/pagos").contentType(MediaType.APPLICATION_JSON).content(PAGO_VALIDO))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.mensaje").value("Valor recibido insuficiente: faltan $2.000"));
+    }
+
+    /** CP-03-06 (error): placa sin cobro → 404 con el mensaje. */
+    @Test
+    @WithMockUser(roles = "OPERADOR")
+    void pagarSinCobroResponde404() throws Exception {
+        when(caja.pagar(any(), any(), any())).thenThrow(new CobroNoEncontradoException());
+
+        mvc.perform(post("/api/caja/pagos").contentType(MediaType.APPLICATION_JSON).content(PAGO_VALIDO))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensaje").value("No hay cobro pendiente para esta placa"));
+    }
+
+    @Test
+    @WithMockUser(roles = "OPERADOR")
+    void sinValorRecibidoResponde400() throws Exception {
+        mvc.perform(post("/api/caja/pagos").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"placa\":\"ABC123\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void pagarSinSesionResponde401() throws Exception {
+        mvc.perform(post("/api/caja/pagos").contentType(MediaType.APPLICATION_JSON).content(PAGO_VALIDO))
+                .andExpect(status().isUnauthorized());
     }
 }

@@ -1,12 +1,18 @@
 package com.uam.parqueadero.pago;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 /** Caja del operador (HU-03): buscar el cobro de una placa y registrar su pago. */
 @RestController
@@ -27,5 +33,16 @@ public class CajaController {
     @GetMapping("/cobros/{placa}")
     public CobroConsulta consultar(@PathVariable String placa) {
         return CobroConsulta.de(caja.consultar(placa));
+    }
+
+    /** Registra el pago en efectivo; el operador es el usuario de la sesión. */
+    @Operation(summary = "Registrar el pago en efectivo",
+            description = "201 con el pago y el cambio. 422 si el efectivo no alcanza, 409 si el cobro "
+                    + "no se puede pagar y 404 si la placa no tiene cobro.")
+    @PostMapping("/pagos")
+    public ResponseEntity<PagoRegistrado> pagar(@Valid @RequestBody SolicitudPago solicitud,
+                                                Authentication operador) {
+        PagoDeCaja pago = caja.pagar(solicitud.placa(), solicitud.valorRecibido(), operador.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(PagoRegistrado.de(pago));
     }
 }
