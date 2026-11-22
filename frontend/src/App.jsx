@@ -6,6 +6,7 @@ import RutaProtegida from "./components/RutaProtegida.jsx";
 import Login from "./pages/Login.jsx";
 import Salida from "./pages/Salida.jsx";
 import Entrada from "./pages/Entrada.jsx";
+import Simulador from "./pages/Simulador.jsx";
 
 /** Pantalla con la barra superior; el login se muestra sin ella. */
 function ConBarra({ roles, children }) {
@@ -24,6 +25,16 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/entrada" replace />} />
       <Route path="/login" element={<Login />} />
+      {/* Vista de la sede para el celular: requiere sesión, pero no muestra la barra superior */}
+      <Route path="/simulador" element={<Navigate to="/simulador/salida" replace />} />
+      <Route
+        path="/simulador/:carril"
+        element={
+          <RutaProtegida>
+            <Simulador />
+          </RutaProtegida>
+        }
+      />
       <Route
         path="/entrada"
         element={
