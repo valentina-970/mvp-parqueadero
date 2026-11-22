@@ -128,6 +128,7 @@ Para apagar: `docker compose down` (con `-v` también borra los datos de la base
 docker compose up -d db          # solo la base de datos
 
 cd backend
+$env:POSTGRES_PASSWORD = "..."    # la misma que pusiste en .env; el código ya no trae un valor por defecto
 $env:ADMIN_CONTRASENA = "..."
 $env:OPERADOR_CONTRASENA = "..."
 .\mvnw spring-boot:run

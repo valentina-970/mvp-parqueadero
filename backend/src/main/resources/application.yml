@@ -2,7 +2,8 @@ spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:parqueadero}
     username: ${POSTGRES_USER:parqueadero_user}
-    password: ${POSTGRES_PASSWORD:1056123237}
+    # Sin valor por defecto: la contraseña sale solo del entorno (archivo .env, que no se sube)
+    password: ${POSTGRES_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -11,7 +12,15 @@ spring:
     enabled: true
 server:
   port: ${BACKEND_PORT:8080}
+  servlet:
+    session:
+      cookie:
+        # La cookie de sesión no se lee desde JavaScript ni viaja en peticiones de otros sitios
+        http-only: true
+        same-site: lax
 app:
+  cors:
+    origen: ${CORS_ORIGEN:http://localhost:5173}
   usuarios:
     admin:
       nombre: ${ADMIN_USUARIO:admin}
