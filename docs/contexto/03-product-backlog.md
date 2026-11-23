@@ -267,7 +267,8 @@ Las referencias SG-xx (supuestos del grupo) están en `02-decisiones-del-grupo.m
 | TT-07 | Release v0.1.0 hacia `main` | Juan Manuel | 1 |
 | TT-08 | Release v1.0.0 hacia `main`, con commits de los cuatro integrantes | Juan Manuel | Cierre |
 | TT-09 | Vista de la sede en el celular, versión simple: carril de entrada (Juan) y carril de salida con barrera (Juan Manuel) | Juan y Juan Manuel | 1 |
-| TT-10 | Vista de la sede estilo videojuego (opcional; máximo 6 horas por persona y solo con el sprint al día) | Juan y Juan Manuel | 2 |
+| TT-10 | ~~Vista de la sede estilo videojuego~~ (descartada el 23 de noviembre; la reemplaza TT-11) | Juan y Juan Manuel | — |
+| TT-11 | Lectura de placas con la cámara del celular: foto, OCR en el navegador (Tesseract.js) y envío a los carriles; el simulador manual queda como plan B | Juan | 2 |
 
 Las tareas de documentación (DOC-01 a DOC-16) corresponden a los entregables del documento de análisis, los manuales y el ensamblaje final.
 

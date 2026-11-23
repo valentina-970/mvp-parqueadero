@@ -39,9 +39,11 @@ Los cuatro programan **historias completas** (backend, frontend, base de datos y
 
 ## Hardware simulado
 
-El MVP no usa cámara ni barrera físicas. La cámara se reemplaza por un simulador (o por la carga de una imagen) y la barrera por un indicador en pantalla. Lector y barrera van detrás de **interfaces** desde el Sprint 1: Juan define la del lector (HU-01) y Juan Manuel la de la barrera (HU-04). Así, pasar del simulador a una cámara real no cambia el flujo del carril.
+El MVP no construye hardware propio. La placa se lee con la **cámara del celular** (TT-11, desde el Sprint 2), con el simulador manual como plan B, y la barrera es un indicador en pantalla. Lector y barrera van detrás de **interfaces** desde el Sprint 1: Juan define la del lector (HU-01) y Juan Manuel la de la barrera (HU-04). Así, pasar del simulador a una cámara real no cambia el flujo del carril.
 
-**Vista de la sede (simulador en el celular):** ruta `/simulador` del mismo proyecto React, pensada para pantalla de celular, que actúa como un cliente más de la API (envía placa y confianza como lo haría una cámara). Sprint 1: versión simple (elegir vehículo, placa y confianza, y ver ABRE o NO ABRE). Sprint 2, opcional: estilo videojuego, máximo 6 horas por persona y solo si el sprint va al día.
+**Vista de la sede (simulador en el celular):** ruta `/simulador` del mismo proyecto React, pensada para pantalla de celular, que actúa como un cliente más de la API (envía placa y confianza como lo haría una cámara). Sprint 1: versión simple (elegir vehículo, placa y confianza, y ver ABRE o NO ABRE). Sprint 2: lectura con la cámara del celular (TT-11), que reemplaza a la versión estilo videojuego (TT-10, descartada).
+
+**Cámara del celular (TT-11, decisión del 23 de noviembre):** en la vista de la sede, el botón "Leer con la cámara" toma una foto con la cámara trasera (`<input type="file" capture="environment">`, que funciona por HTTP en la red local) y la lee con Tesseract.js en el navegador del propio celular, sin costo ni servidor de OCR. Un módulo adaptador limpia el texto y convierte la confianza de 0–100 a 0–1, y envía la placa a los mismos endpoints de entrada y salida, así que el backend no cambia. Las lecturas con confianza baja pasan a la validación manual de HU-06. Esto completa el CA-1 de HU-01 ("desde el simulador o la carga de una imagen").
 
 ## Gitflow
 
@@ -79,7 +81,7 @@ Una historia está terminada cuando:
 | SG-02 | La tarifa se elige según la franja de la hora del primer ingreso del día operativo. Ese ingreso crea el cobro en estado Pendiente. |
 | SG-03 | Franjas por defecto: diurna de 06:00 a 17:59 y nocturna de 18:00 a 05:59. El administrador puede cambiarlas. |
 | SG-04 | El umbral de confianza por defecto es 0,80. Por debajo de ese valor la lectura pasa a validación manual. |
-| SG-05 | Un cobro que sigue Pendiente al terminar su día operativo pasa a Vencido. |
+| SG-05 | Un cobro que sigue Pendiente al terminar su día operativo pasa a Vencido. **Fuera del MVP** (decisión del 23 de noviembre): una tarea que marque Vencido a las 06:00 dejaría atrapado al vehículo que sigue adentro, porque la caja le permite pagar el cobro del día anterior y el estado Vencido rechaza el pago. El estado `CobroVencido` existe en el diseño (patrón State); la transición automática queda como trabajo futuro. |
 | SG-06 | Una placa que no cumple el formato AAA123 ni AAA12A se rechaza y se pide al operador digitarla. |
 
 Otras decisiones: la historia HU-01 une F-01 y F-02; la primera migración precarga una sede, tarifas, franjas, cupos y un usuario por rol; una sola sede en el MVP, pero el modelo guarda la sede en cada registro para poder crecer.

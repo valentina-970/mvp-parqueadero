@@ -26,14 +26,14 @@ Un carro y una moto pueden entrar, generar su cobro, pagar y salir de punta a pu
  
 | ID | Historia o tarea | Responsable | Puntos | Estado |
 |---|---|---|---|---|
-| HU-01 | Registrar el ingreso y clasificar el vehículo | Juan | 5 | Por hacer |
-| HU-02 | Generar el cobro del día operativo | Miguel | 8 | Por hacer |
-| HU-03 | Registrar el pago en efectivo | Valentina | 5 | Por hacer |
-| HU-04 | Autorizar o negar la salida | Juan Manuel | 3 | Por hacer |
-| HU-05 | Iniciar sesión según el rol | Juan Manuel | 3 | Por hacer |
-| TT-06 | Pipeline de pruebas en cada pull request | Juan Manuel | — | Por hacer |
-| TT-07 | Release v0.1.0 | Juan Manuel | — | Por hacer |
-| TT-09 | Vista de la sede (versión simple) | Juan y Juan Manuel | — | Por hacer |
+| HU-01 | Registrar el ingreso y clasificar el vehículo | Juan | 5 | Terminado |
+| HU-02 | Generar el cobro del día operativo | Miguel | 8 | Terminado |
+| HU-03 | Registrar el pago en efectivo | Valentina | 5 | Terminado |
+| HU-04 | Autorizar o negar la salida | Juan Manuel | 3 | Terminado |
+| HU-05 | Iniciar sesión según el rol | Juan Manuel | 3 | Terminado |
+| TT-06 | Pipeline de pruebas en cada pull request | Juan Manuel | — | Terminado |
+| TT-07 | Release v0.1.0 | Juan Manuel | — | Terminado |
+| TT-09 | Vista de la sede (versión simple) | Juan y Juan Manuel | — | Terminado |
  
 Total de historias: 24 puntos.
  
@@ -59,32 +59,81 @@ Total de historias: 24 puntos.
 - Bloqueos: ninguno.
 ### Martes 17 de noviembre
  
-- (pegar los dailies del día)
+**Juan**
+- Hice: dejé listo el entorno en mi PC (JDK 21, Docker y Node), cloné el repositorio y levanté el proyecto. El backend no arrancaba porque el PostgreSQL instalado en Windows ocupaba el puerto 5432; lo resolví usando el 5433 para el contenedor. Traje `develop` con HU-04 a mi rama y ajusté el diseño de HU-01 para reutilizar las clases de `comun/`.
+- Haré: terminar HU-01 (backend, pruebas unitarias y pantalla del carril de entrada) y abrir su pull request.
+- Bloqueos: ninguno; el del puerto de la base de datos quedó resuelto.
+
 ### Miércoles 18 de noviembre
  
-- (pegar los dailies del día)
+**Juan**
+- Hice: HU-01 completa: paquete `entrada/` con Adapter (lector de placas), Chain of Responsibility (formato → confianza → vehículo no adentro), Facade y Observer (`IngresoRegistrado`), 15 pruebas unitarias, pantalla `/entrada` con simulador y estado del código actualizado. PR #21 abierto hacia `develop`.
+- Haré: atender la revisión del PR #21, revisar los PR que me toquen y preparar la aceptación de las historias para la review.
+- Bloqueos: ninguno. La demostración de punta a punta necesita HU-02 y HU-03.
+
 ### Jueves 19 de noviembre
  
-- (pegar los dailies del día)
+**Juan**
+- Hice: HU-01 aprobada y fusionada en `develop` (PR #21). Preparé con Miguel la guía de HU-02, incluido el ajuste para que `IngresoRegistrado` lleve el evento de ingreso que exige la tabla `cobro`. Avancé poco por la carga de otras materias.
+- Haré: revisar el PR de HU-02 y tomar las capturas de la pantalla de entrada para el manual de usuario.
+- Bloqueos: ninguno.
+
 ### Viernes 20 de noviembre
  
-- (pegar los dailies del día)
+**Juan**
+- Hice: revisé y fusioné el PR #22 (HU-02, generación del cobro del día operativo).
+- Haré: revisar los PR pendientes del fin de semana (seguridad de la salida, pipeline, vista de la sede y HU-03).
+- Bloqueos: ninguno.
+
 ### Sábado 21 de noviembre
  
-- (pegar los dailies del día)
+**Juan**
+- Hice: seguimiento del avance del equipo y de los PR abiertos; preparación de la review como PO.
+- Haré: revisar y fusionar los PR #23 (seguridad de la salida), #24 (pipeline, TT-06), #25 (vista de la sede, TT-09) y #26 (HU-03).
+- Bloqueos: ninguno.
+
 ### Domingo 22 de noviembre
  
-- (pegar los dailies del día)
+**Juan**
+- Hice: revisé y fusioné los PR #23, #24, #25 y #26. Review del Sprint 1 como PO: HU-01 a HU-05 aceptadas. Release v0.1.0 en `main`.
+- Haré: decisiones del PO para el Sprint 2 y empezar HU-09.
+- Bloqueos: ninguno.
+
 ## Review (domingo 22 de noviembre)
- 
-- Historias mostradas y resultado del PO (aceptada o devuelta):
+
+- Historias mostradas y resultado del PO:
+
+| Historia | Resultado |
+|---|---|
+| HU-01 Registrar el ingreso y clasificar el vehículo | Aceptada |
+| HU-02 Generar el cobro del día operativo | Aceptada |
+| HU-03 Registrar el pago en efectivo | Aceptada |
+| HU-04 Autorizar o negar la salida | Aceptada |
+| HU-05 Iniciar sesión según el rol | Aceptada |
+
+- Tareas técnicas: TT-06 (pipeline de pruebas), TT-07 (release v0.1.0) y TT-09 (vista de la sede en el celular) terminadas.
+- Escenarios de la demo que ya funcionan de punta a punta: 1 a 4 (moto sin cobro, carro con cobro pendiente, salida negada sin pago, pago y salida).
+- Observaciones de la revisión técnica (Juan Manuel), que pasan al Sprint 2 como tareas OBS: el cobro no se muestra en la pantalla de entrada; dos ingresos simultáneos de la misma placa darían error 500 en vez de un rechazo; el clasificador de placas vive en `salida` aunque lo usan varios módulos; ningún proceso marca los cobros como vencidos (SG-05); los accesos a la base no tienen pruebas de integración; `NuevoCobro` no tiene Javadoc; el simulador muestra "Failed to fetch" sin traducir.
+
 ## Retrospectiva
- 
+
 - Qué funcionó:
+  - Todas las historias del sprint quedaron terminadas y el release v0.1.0 salió a tiempo.
+  - Una misma forma de construir (puertos y adaptadores, cadenas de reglas, fachadas) y las guías paso a paso hicieron que las historias de los cuatro encajaran sin conflictos grandes.
+  - La revisión cruzada de los pull requests y el pipeline encontraron problemas antes de llegar a `main`.
 - Qué no funcionó:
-- Acción concreta para el Sprint 2:
+  - Los dailies no quedaron registrados en el repositorio el mismo día, y hubo que reconstruirlos al final.
+  - Mucho trabajo se concentró en el último día (HU-03, pipeline, vista de la sede y release), por la carga de otras materias.
+  - Las condiciones de carrera solo aparecieron probando a mano; no hay pruebas automáticas de los accesos a la base.
+  - El formateador automático del editor mezcló cambios de formato con cambios de código en algunos PR.
+- Acciones concretas para el Sprint 2 y el cierre:
+  - Registrar el daily en `sprint-2.md` el mismo día.
+  - Abrir el PR de cada historia a más tardar el miércoles 25.
+  - Congelar funcionalidades el sábado 28 a las 12:00; después solo se corrigen errores.
+  - Desactivar el formato automático al guardar para no reformatear archivos ajenos.
+  - Primer borrador de cada parte de la documentación el viernes 27.
+
 ## Evidencia
  
-- Captura del tablero al cierre:
-- Captura del burn-up:
- 
+- Captura del tablero al cierre: `capturas/sprint-1-tablero.png`
+- Captura del burn-up: `capturas/sprint-1-burnup.png`
