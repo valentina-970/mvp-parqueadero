@@ -13,14 +13,20 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-/** Pruebas del primer paso de la cadena: formato y clasificación de la placa. */
+import com.uam.parqueadero.comun.ClasificadorPlacas;
+import com.uam.parqueadero.comun.TipoVehiculoDetectado;
+
+/**
+ * Pruebas del primer paso de la cadena: formato y clasificación de la placa.
+ */
 class ValidarPlacaPasoTest {
 
     private final ClasificadorPlacas clasificador = mock(ClasificadorPlacas.class);
     private final ValidarPlacaPaso paso = new ValidarPlacaPaso(clasificador);
 
     private ContextoSalida contexto(String placa) {
-        return new ContextoSalida(new SolicitudSalida(placa, new BigDecimal("0.95")), placa, UUID.randomUUID(), Instant.now());
+        return new ContextoSalida(new SolicitudSalida(placa, new BigDecimal("0.95")), placa, UUID.randomUUID(),
+                Instant.now());
     }
 
     @Test

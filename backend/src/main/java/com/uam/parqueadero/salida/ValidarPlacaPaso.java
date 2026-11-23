@@ -1,6 +1,10 @@
 package com.uam.parqueadero.salida;
 
+import com.uam.parqueadero.comun.ClasificadorPlacas;
+
 /**
+ * 
+ * /**
  * Primer paso: la placa debe tener un formato válido (AAA123 o AAA12A, SG-06).
  * Si lo tiene, deja en el contexto el tipo de vehículo.
  */

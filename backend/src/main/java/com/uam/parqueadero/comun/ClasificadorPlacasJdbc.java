@@ -1,4 +1,4 @@
-package com.uam.parqueadero.salida.infraestructura;
+package com.uam.parqueadero.comun;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,9 +7,6 @@ import java.util.regex.Pattern;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-
-import com.uam.parqueadero.salida.ClasificadorPlacas;
-import com.uam.parqueadero.salida.TipoVehiculoDetectado;
 
 /**
  * Clasifica la placa con las expresiones regulares guardadas en {@code tipo_vehiculo.patron_placa}.

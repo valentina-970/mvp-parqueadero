@@ -1,6 +1,6 @@
 package com.uam.parqueadero.entrada;
 
-import com.uam.parqueadero.salida.ClasificadorPlacas;
+import com.uam.parqueadero.comun.ClasificadorPlacas;
 
 /**
  * Primer paso: la placa debe ser de carro (AAA123) o de moto (AAA12A). Si lo es, deja el tipo
