@@ -18,7 +18,7 @@ public class ErroresCajaAdvice {
 
     @ExceptionHandler(ValorInsuficienteException.class)
     ResponseEntity<Map<String, String>> insuficiente(ValorInsuficienteException e) {
-        return respuesta(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+        return respuesta(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
     }
 
     @ExceptionHandler(CobroNoPagableException.class)

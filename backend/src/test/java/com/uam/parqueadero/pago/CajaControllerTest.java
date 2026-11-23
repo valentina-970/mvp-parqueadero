@@ -99,7 +99,7 @@ class CajaControllerTest {
                 .thenThrow(new ValorInsuficienteException(new BigDecimal("2000")));
 
         mvc.perform(post("/api/caja/pagos").contentType(MediaType.APPLICATION_JSON).content(PAGO_VALIDO))
-                .andExpect(status().isUnprocessableEntity())
+                .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.mensaje").value("Valor recibido insuficiente: faltan $2.000"));
     }
 
