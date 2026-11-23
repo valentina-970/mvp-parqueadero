@@ -1,4 +1,4 @@
-package com.uam.parqueadero.salida;
+package com.uam.parqueadero.comun;
 
 import java.util.Optional;
 

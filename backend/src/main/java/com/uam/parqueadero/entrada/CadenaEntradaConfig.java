@@ -3,7 +3,7 @@ package com.uam.parqueadero.entrada;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.uam.parqueadero.salida.ClasificadorPlacas;
+import com.uam.parqueadero.comun.ClasificadorPlacas;
 
 /** Arma la cadena de validaciones del ingreso en el orden en que se aplican. */
 @Configuration

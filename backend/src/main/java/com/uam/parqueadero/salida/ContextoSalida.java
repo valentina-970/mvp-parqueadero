@@ -4,9 +4,13 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.uam.parqueadero.comun.TipoVehiculoDetectado;
+
 /**
- * Datos que recorren la cadena de validaciones de la salida. Cada paso lee lo que
- * necesita, agrega lo que descubre y, si corresponde, rechaza la salida con un motivo.
+ * Datos que recorren la cadena de validaciones de la salida. Cada paso lee lo
+ * que
+ * necesita, agrega lo que descubre y, si corresponde, rechaza la salida con un
+ * motivo.
  */
 public class ContextoSalida {
 
@@ -69,7 +73,10 @@ public class ContextoSalida {
         this.valorPendiente = valorPendiente;
     }
 
-    /** Deja el motivo con el que se autoriza la salida (por ejemplo "Cobro del día pagado"). */
+    /**
+     * Deja el motivo con el que se autoriza la salida (por ejemplo "Cobro del día
+     * pagado").
+     */
     public void autorizar(String motivo) {
         this.motivoAutorizacion = motivo;
     }
@@ -78,7 +85,10 @@ public class ContextoSalida {
         return motivoAutorizacion;
     }
 
-    /** Marca la salida como rechazada; la cadena se detiene en el paso que llama a este método. */
+    /**
+     * Marca la salida como rechazada; la cadena se detiene en el paso que llama a
+     * este método.
+     */
     public void rechazar(String motivo) {
         this.motivoRechazo = motivo;
     }

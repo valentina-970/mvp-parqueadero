@@ -3,7 +3,7 @@ package com.uam.parqueadero.entrada;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.uam.parqueadero.salida.TipoVehiculoDetectado;
+import com.uam.parqueadero.comun.TipoVehiculoDetectado;
 
 /**
  * Datos que recorren la cadena de validaciones del ingreso. Cada paso lee lo que necesita,

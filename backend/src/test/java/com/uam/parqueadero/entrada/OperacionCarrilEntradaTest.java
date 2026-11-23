@@ -23,8 +23,8 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import com.uam.parqueadero.comun.SedeActual;
 import com.uam.parqueadero.entrada.infraestructura.LectorSimulado;
-import com.uam.parqueadero.salida.ClasificadorPlacas;
-import com.uam.parqueadero.salida.TipoVehiculoDetectado;
+import com.uam.parqueadero.comun.ClasificadorPlacas;
+import com.uam.parqueadero.comun.TipoVehiculoDetectado;
 
 /**
  * Pruebas de la fachada con la cadena real, el lector simulado y los puertos simulados.

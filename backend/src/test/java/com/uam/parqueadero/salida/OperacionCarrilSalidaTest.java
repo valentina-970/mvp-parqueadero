@@ -24,10 +24,13 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.uam.parqueadero.comun.ClasificadorPlacas;
 import com.uam.parqueadero.comun.SedeActual;
+import com.uam.parqueadero.comun.TipoVehiculoDetectado;
 
 /**
- * Pruebas de la fachada con la cadena real y los puertos simulados. Verifican el flujo
+ * Pruebas de la fachada con la cadena real y los puertos simulados. Verifican
+ * el flujo
  * completo del carril de salida sin base de datos.
  */
 class OperacionCarrilSalidaTest {
@@ -69,7 +72,10 @@ class OperacionCarrilSalidaTest {
         return new SolicitudSalida(placa, new BigDecimal("0.95"));
     }
 
-    /** CP-04-03 (éxito): una salida permitida queda en el registro con su resultado y motivo. */
+    /**
+     * CP-04-03 (éxito): una salida permitida queda en el registro con su resultado
+     * y motivo.
+     */
     @Test
     void unaSalidaPermitidaQuedaRegistrada() {
         ResultadoSalida resultado = operacion.procesar(solicitud(" abc-123 "));
@@ -86,11 +92,14 @@ class OperacionCarrilSalidaTest {
         assertEquals(HOY, evento.getValue().diaOperativo());
     }
 
-    /** CP-04-03 (éxito): una salida negada también queda registrada, con el motivo. */
+    /**
+     * CP-04-03 (éxito): una salida negada también queda registrada, con el motivo.
+     */
     @Test
     void unaSalidaNegadaQuedaRegistradaConSuMotivo() {
         when(cobros.buscar(sede, "ABC123", HOY))
-                .thenReturn(Optional.of(new CobroDia(UUID.randomUUID(), EstadoCobro.PENDIENTE, new BigDecimal("5000"))));
+                .thenReturn(
+                        Optional.of(new CobroDia(UUID.randomUUID(), EstadoCobro.PENDIENTE, new BigDecimal("5000"))));
 
         ResultadoSalida resultado = operacion.procesar(solicitud("ABC123"));
 
@@ -103,7 +112,9 @@ class OperacionCarrilSalidaTest {
         assertEquals("Cobro pendiente por $5.000", evento.getValue().motivo());
     }
 
-    /** CP-04-05 (error): placa sin ingreso → NO ABRE, y el intento queda registrado. */
+    /**
+     * CP-04-05 (error): placa sin ingreso → NO ABRE, y el intento queda registrado.
+     */
     @Test
     void sinIngresoNoAbreYQuedaRegistrado() {
         when(estancias.buscarAbierta(sede, "ABC123")).thenReturn(Optional.empty());
@@ -115,7 +126,10 @@ class OperacionCarrilSalidaTest {
         verify(eventos).registrarSalida(any());
     }
 
-    /** CP-04-01 (éxito): moto adentro, sin cobro → ABRE y la moto queda fuera (libera su cupo). */
+    /**
+     * CP-04-01 (éxito): moto adentro, sin cobro → ABRE y la moto queda fuera
+     * (libera su cupo).
+     */
     @Test
     void unaMotoSinCobroAbreYQuedaFuera() {
         ResultadoSalida resultado = operacion.procesar(solicitud("XYZ12D"));
@@ -126,12 +140,16 @@ class OperacionCarrilSalidaTest {
         verify(estancias).cerrar(estanciaId, eventoId, AHORA);
     }
 
-    /** CP-04-04 (error): con cobro pendiente la barrera queda cerrada y la estancia sigue abierta. */
+    /**
+     * CP-04-04 (error): con cobro pendiente la barrera queda cerrada y la estancia
+     * sigue abierta.
+     */
     @Test
     void siNoAbreLaBarreraSeCierraYElVehiculoSigueAdentro() {
         barrera.abrir(); // venía abierta de una salida anterior
         when(cobros.buscar(sede, "ABC123", HOY))
-                .thenReturn(Optional.of(new CobroDia(UUID.randomUUID(), EstadoCobro.PENDIENTE, new BigDecimal("5000"))));
+                .thenReturn(
+                        Optional.of(new CobroDia(UUID.randomUUID(), EstadoCobro.PENDIENTE, new BigDecimal("5000"))));
 
         ResultadoSalida resultado = operacion.procesar(solicitud("ABC123"));
 
@@ -139,7 +157,10 @@ class OperacionCarrilSalidaTest {
         verify(estancias, never()).cerrar(any(), any(), any());
     }
 
-    /** Con transacción activa, la barrera solo abre cuando la transacción se confirma. */
+    /**
+     * Con transacción activa, la barrera solo abre cuando la transacción se
+     * confirma.
+     */
     @Test
     void conTransaccionActivaLaBarreraAbreSoloAlConfirmar() {
         TransactionSynchronizationManager.initSynchronization();
@@ -192,7 +213,10 @@ class OperacionCarrilSalidaTest {
         }
     }
 
-    /** Una placa inválida se rechaza sin registrar evento: el evento exige el tipo de vehículo. */
+    /**
+     * Una placa inválida se rechaza sin registrar evento: el evento exige el tipo
+     * de vehículo.
+     */
     @Test
     void unaPlacaInvalidaSeRechazaSinRegistrarEvento() {
         ResultadoSalida resultado = operacion.procesar(solicitud("AB1234"));
