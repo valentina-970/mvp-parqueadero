@@ -3,6 +3,7 @@ package com.uam.parqueadero.entrada;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.uam.parqueadero.comun.SedeActual;
@@ -39,6 +41,7 @@ class OperacionCarrilEntradaTest {
     private final ClasificadorPlacas clasificador = mock(ClasificadorPlacas.class);
     private final EventosEntrada eventos = mock(EventosEntrada.class);
     private final EstanciasEntrada estancias = mock(EstanciasEntrada.class);
+    private final BloqueoCupos bloqueo = mock(BloqueoCupos.class);
     private final ApplicationEventPublisher publicador = mock(ApplicationEventPublisher.class);
     private final UUID sede = UUID.randomUUID();
     private final UUID eventoId = UUID.randomUUID();
@@ -53,7 +56,9 @@ class OperacionCarrilEntradaTest {
         SedeActual sedeActual = () -> sede;
         UmbralConfianza umbral = () -> new BigDecimal("0.80");
         PasoEntrada cadena = new ValidarFormatoPaso(clasificador);
-        cadena.enlazar(new VerificarConfianzaPaso(umbral)).enlazar(new VerificarNoAdentroPaso(estancias));
+        cadena.enlazar(new VerificarConfianzaPaso(umbral))
+                .enlazar(new BloquearCupoPaso(bloqueo))
+                .enlazar(new VerificarNoAdentroPaso(estancias));
         operacion = new OperacionCarrilEntrada(
                 new LectorSimulado(), cadena, eventos, estancias, publicador, sedeActual, reloj);
 
@@ -175,5 +180,23 @@ class OperacionCarrilEntradaTest {
         assertEquals("ABC123", aviso.getValue().placa());
         assertEquals(carro.id(), aviso.getValue().tipoVehiculoId());
         assertEquals(HOY, aviso.getValue().diaOperativo());
+    }
+
+    /** OBS-2: el cupo del tipo se bloquea antes de comprobar si el vehículo ya está adentro. */
+    @Test
+    void bloqueaElCupoAntesDeVerificarSiYaEstaAdentro() {
+        operacion.procesar(solicitud("ABC123", "0.95"));
+
+        InOrder orden = inOrder(bloqueo, estancias);
+        orden.verify(bloqueo).bloquear(sede, carro.id());
+        orden.verify(estancias).hayAbierta(sede, "ABC123");
+    }
+
+    /** OBS-2: una lectura que queda pendiente no bloquea el cupo ni hace esperar a nadie. */
+    @Test
+    void unaLecturaPendienteNoBloqueaElCupo() {
+        operacion.procesar(solicitud("ABC123", "0.50"));
+
+        verify(bloqueo, never()).bloquear(any(), any());
     }
 }
