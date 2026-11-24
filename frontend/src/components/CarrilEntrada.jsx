@@ -4,6 +4,7 @@ import { get } from '../services/api.js';
 import PlacaVisual from './PlacaVisual.jsx';
 import BannerResultado from './BannerResultado.jsx';
 import IndicadorBarrera from './IndicadorBarrera.jsx';
+import CobroGenerado from './CobroGenerado.jsx';
 
 const INTERVALO_MS = 2000;
 
@@ -68,6 +69,9 @@ export default function CarrilEntrada({ version }) {
                 minute: '2-digit',
               })}
             />
+            {lectura.resultado === 'PERMITIDO' && (
+              <CobroGenerado key={lectura.ocurridoEn} placa={lectura.placa} />
+            )}
             <div className="my-3">
               <BannerResultado tipo={banner.tipo}>{banner.texto}</BannerResultado>
             </div>
