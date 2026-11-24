@@ -7,6 +7,7 @@ import Login from "./pages/Login.jsx";
 import Salida from "./pages/Salida.jsx";
 import Entrada from "./pages/Entrada.jsx";
 import Simulador from "./pages/Simulador.jsx";
+import Consultas from "./pages/Consultas.jsx";
 
 /** Pantalla con la barra superior; el login se muestra sin ella. */
 function ConBarra({ roles, children }) {
@@ -55,7 +56,7 @@ export default function App() {
         path="/consultas"
         element={
           <ConBarra>
-            <Pagina titulo="Consultas" />
+            <Consultas />
           </ConBarra>
         }
       />

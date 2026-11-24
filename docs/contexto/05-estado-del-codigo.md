@@ -71,6 +71,8 @@ mvp-parqueadero/
   - **Puertos pequeños (principios I y D):** `BuscadorDeCobros` (solo lectura, con y sin bloqueo), `RegistroPagos` y `OperadoresCaja`. Sus adaptadores están en `pago/infraestructura/` y leen y escriben las tablas `cobro`, `pago` y `usuario`; la caja no depende de cómo HU-02 crea los cobros.
   - **Concurrencia:** al pagar se bloquea la fila del cobro (`FOR UPDATE`), y el pago ya existente se lee en una segunda consulta después del bloqueo. Probado con 8 pagos simultáneos del mismo cobro: se crea 1 pago, los otros 7 reciben el existente, y la restricción `uq_pago_cobro` queda como última defensa.
   - Si el vehículo cruzó las 06:00 con el cobro del día anterior pendiente, la caja también lo encuentra, para que pueda pagar y salir (la salida de HU-04 hace la misma comprobación).
+- **Consultas (HU-09):** paquete `consulta/`, solo lectura. `GET /api/consultas/eventos` (filtros `placa`, `desde`, `hasta`) y `GET /api/consultas/cobros` (los mismos más `estado`), ambos con `pagina` desde 0. Responden `{contenido, pagina, totalPaginas, totalElementos}` en páginas de 20, del más reciente al más antiguo; 400 si la fecha final es anterior a la inicial o el estado no existe. Operador y administrador.
+  - `FiltroConsulta` normaliza la placa y valida el rango; los puertos `ConsultaEventos` y `ConsultaCobros` tienen sus adaptadores JDBC en `consulta/infraestructura/`, y `CondicionesSql` arma el `WHERE` solo con los filtros que llegan.
 - **Swagger:** springdoc en `/swagger-ui.html` y `/v3/api-docs`. Todo endpoint nuevo se documenta con `@Tag` y `@Operation`.
 - **`controller/HealthController`:** `GET /api/health` responde `{"estado":"ok"}`.
 - **`application.yml`:** toda la configuración sale de variables de entorno, con valores por defecto para desarrollo local.
@@ -90,11 +92,12 @@ El archivo `.env` es local y **no se sube**; `.env.example` documenta las variab
 ## Frontend
 
 - **React con Vite, JavaScript** (no TypeScript), con React-Bootstrap, Bootstrap, React Router y ESLint.
-- **Rutas:** `/login`, `/entrada`, `/salida`, `/administracion` y `/consultas`. `/login`, `/entrada` y `/salida` tienen interfaz; las demás son marcadores (`components/Pagina`) pendientes de cada historia.
+- **Rutas:** `/login`, `/entrada`, `/salida`, `/administracion` y `/consultas`. Todas tienen interfaz menos `/administracion`, que sigue siendo un marcador (`components/Pagina`) hasta HU-08.
 - **Componentes compartidos según los mockups:** `PlacaVisual` (placa amarilla), `BannerResultado` (verde, rojo o amarillo), `IndicadorBarrera`. Están pensados para que los usen las demás pantallas.
 - **Vista de la sede para el celular (TT-09):** `pages/Simulador` en `/simulador/salida` y `/simulador/entrada` (`/simulador` lleva a la salida). Tema oscuro y pantalla de celular, según el mockup: `components/EscenaSede` dibuja la vía, el vehículo con su placa y la barrera (se levanta y se pone verde cuando abre), un banner "ABRE · motivo" o "NO ABRE · motivo", y el formulario con tipo de vehículo, placa y confianza. Llama a `/api/salida` o `/api/entrada` y adapta cada respuesta (la salida responde `abre`; la entrada, `resultado`). Requiere sesión, pero no muestra la barra superior. Desde el celular se abre con la IP del computador: `http://IP-DEL-PC:5173/simulador/salida`; al iniciar sesión vuelve a la pantalla que se pidió.
 - **`pages/Entrada`:** carril de entrada (`components/CarrilEntrada`, consulta `/api/entrada/ultimo` cada 2 segundos) y, a la derecha, `components/SimuladorLectura`, un formulario de placa y confianza que envía la lectura a la ruta que recibe (sirve también para la salida). El banner amarillo (`.banner-aviso`) marca las lecturas que requieren validación manual. Cuando el ingreso es permitido, `components/CobroGenerado` consulta la caja y muestra el cobro generado o "Sin cobro".
 - **`pages/Salida`:** carril de salida (`components/CarrilSalida`, consulta `/api/salida/ultima` cada 2 segundos) y, a la derecha, `components/CajaPago`: busca la placa, muestra día operativo, franja, tarifa, valor y estado (`components/EstadoBadge`), calcula el cambio mientras se escribe el efectivo (`utils/formato.js`), registra el pago y muestra el resumen con el pase vigente y el operador. Si el cobro está pagado, anulado o vencido, lo explica en lugar de pedir el efectivo.
+- **`pages/Consultas`:** pestañas Eventos y Cobros, filtros por placa, rango de fechas y estado (solo cobros), tabla y `components/Paginador`. Si la fecha final es anterior a la inicial, avisa sin consultar.
 - **`pages/Login`:** inicio de sesión real contra `/api/auth/login`, según el mockup (mensaje de error genérico).
 - **`auth/`:** `AuthProvider` guarda el usuario de la sesión (la recupera con `/api/auth/yo` al abrir la app) y ofrece `iniciarSesion` y `cerrarSesion`; `useAuth` lo expone a los componentes.
 - **`components/RutaProtegida`:** sin sesión lleva a `/login`; con rol insuficiente (por ejemplo, un operador en `/administracion`) vuelve a `/entrada`. **`components/Navegacion`** solo muestra Administración al administrador, el usuario y su rol, y "Cerrar sesión".
@@ -160,5 +163,5 @@ No corras `npm run dev` y el contenedor `frontend` a la vez: usan el mismo puert
 ## Pendientes técnicos conocidos
 
 - `ParqueaderoApplicationTests` (arranque completo) necesita la base de datos levantada y las variables del `.env` en la terminal; en el pipeline las pone el propio workflow.
-- Las historias HU-06 a HU-09 no están implementadas (Sprint 2).
+- Las historias HU-06 a HU-08 no están implementadas (Sprint 2).
 - Una migración ya aplicada no se edita: los cambios al esquema van en `V3__...` en adelante.
