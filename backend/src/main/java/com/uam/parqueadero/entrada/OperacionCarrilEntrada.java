@@ -80,6 +80,7 @@ public class OperacionCarrilEntrada {
                 contexto.placa(),
                 contexto.tipo() == null ? null : contexto.tipo().nombre(),
                 lectura.confianza(),
-                contexto.ahora());
+                contexto.ahora(),
+                contexto.lleno());
     }
 }

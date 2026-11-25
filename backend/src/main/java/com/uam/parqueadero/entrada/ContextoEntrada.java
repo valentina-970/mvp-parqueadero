@@ -20,6 +20,7 @@ public class ContextoEntrada {
     private EstadoIngreso estado = EstadoIngreso.PERMITIDO;
     private String motivo = MOTIVO_REGISTRADO;
     private boolean decidido;
+    private boolean lleno;
 
     public ContextoEntrada(LecturaPlaca lectura, UUID sedeId, Instant ahora) {
         this.lectura = lectura;
@@ -55,6 +56,17 @@ public class ContextoEntrada {
     /** Rechaza la lectura; la cadena se detiene en el paso que llama a este método. */
     public void rechazar(String motivo) {
         decidir(EstadoIngreso.RECHAZADO, motivo);
+    }
+
+    /** Rechaza la lectura porque el tipo de vehículo no tiene cupo (HU-07); la pantalla muestra LLENO. */
+    public void rechazarPorCupo(String motivo) {
+        this.lleno = true;
+        rechazar(motivo);
+    }
+
+    /** {@code true} si el ingreso se rechazó porque el tipo de vehículo no tiene cupo. */
+    public boolean lleno() {
+        return lleno;
     }
 
     /** Deja la lectura para validación manual; la cadena también se detiene. */
