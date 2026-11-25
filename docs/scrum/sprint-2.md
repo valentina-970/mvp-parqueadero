@@ -24,7 +24,7 @@ Completar las funcionalidades obligatorias (lectura manual, cupos, administraci�
 | ID | Historia o tarea | Responsable | Puntos | Estado |
 |---|---|---|---|---|
 | HU-06 | Validar manualmente una lectura dudosa | Miguel | 5 | Por hacer |
-| HU-07 | Controlar los cupos por tipo de vehículo | Juan Manuel | 2 | Por hacer |
+| HU-07 | Controlar los cupos por tipo de vehículo | Juan Manuel | 2 | En revisión |
 | HU-08 | Administrar tarifas, franjas y cupos | Valentina | 3 | En progreso |
 | HU-09 | Consultar eventos y cobros | Juan | 2 | En revisión |
 | TT-11 | Lectura de placas con la cámara del celular (reemplaza a TT-10) | Juan | 2 | Por hacer |
@@ -66,9 +66,10 @@ Total de historias: 12 puntos, más TT-11 (2 puntos). Las observaciones (OBS) sa
 - Pedido al equipo: subir a GitHub lo que lleven de HU-06, HU-07 y HU-08, aunque esté a medias, para ver el avance. Fecha de los PR: miércoles 25.
 **Juan Manuel**
 - Hice: validé el estado del repositorio frente al plan: `develop` con 126 pruebas en verde contra la base real, lint y build del frontend limpios, y el sistema arrancando con Docker. Confirmé que las ramas de HU-06 y HU-07 todavía no existen y que la de HU-08 ya está creada. Respondí los dos puntos técnicos de Valentina: el umbral de confianza vive en la fila `umbral_confianza` de la tabla `parametro`, que la entrada ya lee con el puerto `UmbralConfianza`, y los vehículos que están adentro son las estancias sin hora de salida, por tipo de vehículo.
-- Haré: HU-07 (control de cupos), con su PR hoy según el plan, y OBS-7 (mensaje "No se pudo conectar con el servidor") el miércoles.
-- Bloqueos: ninguno. Falta crear la rama `feature/HU-07-cupos` desde la tarjeta.
-- Pedido al equipo: Valentina, para el CA-5 de HU-08 reutiliza el conteo de estancias abiertas; HU-07 va a dejar un puerto con los cupos ocupados cuando se fusione. Miguel, acuerda el umbral con ella según lo anterior y recuerda hacer `git merge develop` antes de fusionar HU-06.
+- Hice además: HU-07 (control de cupos) completa en `feature/HU-07-cupos`. Paquete `cupo/` con el modelo `Cupo`, el puerto de solo lectura `CuposDeLaSede` y `GET /api/cupos`; los ocupados son las estancias abiertas, así que cada salida libera su cupo sin guardar nada. `VerificarCupoPaso` es el último eslabón de la cadena de la entrada, después de `BloquearCupoPaso` y del anti-passback: sin lugar rechaza como LLENO, sin abrir la estancia, sin generar cobro y dejando el rechazo en eventos. En pantalla, la tarjeta de cupos y el banner "LLENO · Barrera cerrada" en la entrada, y los chips y el aviso en el simulador del celular. 143 pruebas en verde, con una prueba de integración contra la base real para la liberación del cupo, y probado de punta a punta en Docker con los 5 casos de prueba (CP-07-01 a CP-07-05).
+- Haré: abrir el PR de HU-07 hoy y revisar el que me toque; OBS-7 (mensaje "No se pudo conectar con el servidor") el miércoles.
+- Bloqueos: ninguno.
+- Pedido al equipo: Valentina, para el CA-5 de HU-08 reutiliza el conteo de estancias abiertas; HU-07 ya dejó ese puerto: `CuposDeLaSede` (en `cupo/`) devuelve la capacidad y los ocupados por tipo; se usa apenas se fusione el PR. Miguel, acuerda el umbral con ella según lo anterior y recuerda hacer `git merge develop` antes de fusionar HU-06.
 **Valentina**
 - Hice: creé la rama `feature/HU-08-admin-tarifas` y leí los criterios CA-1 a CA-7 de HU-08. Con lo que respondió Juan Manuel ya quedaron definidos los dos puntos técnicos: el umbral de confianza se edita en la fila `umbral_confianza` de la tabla `parametro` y los vehículos que están adentro se cuentan con las estancias sin hora de salida.
 - Haré: el backend de HU-08 solo para el administrador: tarifas con la regla de que la nocturna sea menor que la diurna (salvo las motos en $0) y ninguna negativa, franjas que cubran las 24 horas sin solaparse, cupos que no queden por debajo de los vehículos que están adentro y umbral entre 0 y 1. Después, sus pruebas y la pantalla `/administracion`.
