@@ -25,13 +25,13 @@ Completar las funcionalidades obligatorias (lectura manual, cupos, administraci�
 |---|---|---|---|---|
 | HU-06 | Validar manualmente una lectura dudosa | Miguel | 5 | Por hacer |
 | HU-07 | Controlar los cupos por tipo de vehículo | Juan Manuel | 2 | Por hacer |
-| HU-08 | Administrar tarifas, franjas y cupos | Valentina | 3 | Por hacer |
-| HU-09 | Consultar eventos y cobros | Juan | 2 | Por hacer |
+| HU-08 | Administrar tarifas, franjas y cupos | Valentina | 3 | En progreso |
+| HU-09 | Consultar eventos y cobros | Juan | 2 | En revisión |
 | TT-11 | Lectura de placas con la cámara del celular (reemplaza a TT-10) | Juan | 2 | Por hacer |
 | TT-08 | Release v1.0.0 hacia `main`, con commits de los cuatro integrantes | Juan Manuel | — | Por hacer |
-| OBS-1 | Mostrar el cobro generado en la pantalla de entrada | Juan | — | Por hacer |
-| OBS-2 | Rechazo limpio de ingresos simultáneos de la misma placa (bloqueo de la fila de cupo) | Juan | — | Por hacer |
-| OBS-3 | Mover el clasificador de placas a `comun` | Juan | — | En revisión |
+| OBS-1 | Mostrar el cobro generado en la pantalla de entrada | Juan | — | Terminado |
+| OBS-2 | Rechazo limpio de ingresos simultáneos de la misma placa (bloqueo de la fila de cupo) | Juan | — | Terminado |
+| OBS-3 | Mover el clasificador de placas a `comun` | Juan | — | Terminado |
 | OBS-5 | Pruebas de integración de las condiciones de carrera (si hay tiempo) | Juan Manuel | — | Por hacer |
 | OBS-6 | Javadoc de `NuevoCobro` | Miguel | — | Por hacer |
 | OBS-7 | Mensaje "No se pudo conectar con el servidor" en lugar de "Failed to fetch" | Juan Manuel | — | Por hacer |
@@ -43,10 +43,37 @@ Total de historias: 12 puntos, más TT-11 (2 puntos). Las observaciones (OBS) sa
 ### Lunes 23 de noviembre
 
 **Juan**
-- Hice: decisiones del PO para el Sprint 2 (cámara del celular, SG-05 fuera del MVP y reparto de las observaciones). Refactor del clasificador de placas a `comun` con su PR abierto. Registro del cierre del Sprint 1.
-- Haré: OBS-1 y OBS-2 en la pantalla y el carril de entrada, y empezar HU-09 (consultas).
+- Hice: decisiones del PO para el Sprint 2 (cámara del celular, SG-05 fuera del MVP y reparto de las observaciones). Refactor del clasificador a `comun` (PR #29) y registro del cierre del Sprint 1 (PR #30). OBS-1 y OBS-2: cobro en la pantalla de entrada y bloqueo de cupo para ingresos simultáneos (PR #31). HU-09 completa: consultas de eventos y cobros, 14 pruebas y pantalla (PR #32). Todo fusionado en `develop`, 126 pruebas en verde.
+- Haré: TT-11, lectura de placas con la cámara del celular.
 - Bloqueos: ninguno.
-- Pedido al equipo: crear las ramas del Sprint 2 después de que se fusione el refactor del clasificador.
+- Pedido al equipo: crear las ramas del Sprint 2 desde `develop` actualizado. Juan Manuel: el paso de cupos de HU-07 va después de `BloquearCupoPaso`.
+**Juan Manuel**
+- Hice: revisé y fusioné los pull requests #29 (clasificador de placas en `comun`), #30 (registro del Sprint 1 y planning del Sprint 2) y #32 (HU-09, consultas). Leí el plan del equipo para el Sprint 2 y los criterios CA-1 a CA-7 de HU-07.
+- Haré: crear la rama de HU-07 y construir el paso de cupos en la cadena de la entrada, después de `BloquearCupoPaso`.
+- Bloqueos: HU-07 esperaba el bloqueo de cupo de Juan (OBS-2), que se fusionó el lunes por la noche con el PR #31. Ya no hay bloqueo.
+**Valentina**
+- Hice: revisión de la asignación de HU-08 (administración, 3 puntos) y preparación del entorno para arrancar el desarrollo.
+- Haré: crear la rama `feature/HU-08-admin-tarifas`, leer los criterios CA-1 a CA-7 en `03-product-backlog.md` y coordinar con Miguel dónde se guarda el umbral de confianza (HU-08 lo edita y HU-06 lo lee) y con Juan Manuel cómo contar los vehículos que están adentro (CA-5).
+- Bloqueos: falta definir con Miguel y Juan Manuel esos dos puntos técnicos antes de codificar la validación.
+(pegar el daily de Miguel)
+
+### Martes 24 de noviembre
+
+**Juan**
+- Hice: revisión del avance del sprint frente al plan. OBS-1, OBS-2 y HU-09 quedaron en `develop` dos días antes de lo previsto.
+- Haré: TT-11 (cámara del celular) el miércoles; jueves y viernes, borrador del documento de análisis A y B y estructura del manual de usuario.
+- Bloqueos: ninguno.
+- Pedido al equipo: subir a GitHub lo que lleven de HU-06, HU-07 y HU-08, aunque esté a medias, para ver el avance. Fecha de los PR: miércoles 25.
+**Juan Manuel**
+- Hice: validé el estado del repositorio frente al plan: `develop` con 126 pruebas en verde contra la base real, lint y build del frontend limpios, y el sistema arrancando con Docker. Confirmé que las ramas de HU-06 y HU-07 todavía no existen y que la de HU-08 ya está creada. Respondí los dos puntos técnicos de Valentina: el umbral de confianza vive en la fila `umbral_confianza` de la tabla `parametro`, que la entrada ya lee con el puerto `UmbralConfianza`, y los vehículos que están adentro son las estancias sin hora de salida, por tipo de vehículo.
+- Haré: HU-07 (control de cupos), con su PR hoy según el plan, y OBS-7 (mensaje "No se pudo conectar con el servidor") el miércoles.
+- Bloqueos: ninguno. Falta crear la rama `feature/HU-07-cupos` desde la tarjeta.
+- Pedido al equipo: Valentina, para el CA-5 de HU-08 reutiliza el conteo de estancias abiertas; HU-07 va a dejar un puerto con los cupos ocupados cuando se fusione. Miguel, acuerda el umbral con ella según lo anterior y recuerda hacer `git merge develop` antes de fusionar HU-06.
+**Valentina**
+- Hice: creé la rama `feature/HU-08-admin-tarifas` y leí los criterios CA-1 a CA-7 de HU-08. Con lo que respondió Juan Manuel ya quedaron definidos los dos puntos técnicos: el umbral de confianza se edita en la fila `umbral_confianza` de la tabla `parametro` y los vehículos que están adentro se cuentan con las estancias sin hora de salida.
+- Haré: el backend de HU-08 solo para el administrador: tarifas con la regla de que la nocturna sea menor que la diurna (salvo las motos en $0) y ninguna negativa, franjas que cubran las 24 horas sin solaparse, cupos que no queden por debajo de los vehículos que están adentro y umbral entre 0 y 1. Después, sus pruebas y la pantalla `/administracion`.
+- Bloqueos: ninguno.
+(pegar el daily de Miguel)
 
 ## Review (domingo 29 de noviembre)
 
