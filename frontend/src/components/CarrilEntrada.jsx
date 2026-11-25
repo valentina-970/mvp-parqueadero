@@ -15,6 +15,9 @@ const BANNERS = {
   RECHAZADO: { tipo: 'error', texto: 'INGRESO RECHAZADO' },
 };
 
+/** Un ingreso rechazado por falta de cupo se muestra como LLENO (HU-07). */
+const BANNER_LLENO = { tipo: 'error', texto: 'LLENO · Barrera cerrada' };
+
 function Fila({ etiqueta, valor }) {
   return (
     <div className="d-flex justify-content-between py-1">
@@ -46,7 +49,7 @@ export default function CarrilEntrada({ version }) {
     };
   }, [version]);
 
-  const banner = lectura && BANNERS[lectura.resultado];
+  const banner = lectura && (lectura.lleno ? BANNER_LLENO : BANNERS[lectura.resultado]);
 
   return (
     <Card>
@@ -75,7 +78,12 @@ export default function CarrilEntrada({ version }) {
             <div className="my-3">
               <BannerResultado tipo={banner.tipo}>{banner.texto}</BannerResultado>
             </div>
-            <p className="fw-semibold">Motivo: {lectura.motivo}</p>
+            <p className="fw-semibold">Motivo: {lectura.lleno ? lectura.motivo.replace(/^LLENO:\s*/, '') : lectura.motivo}</p>
+            {lectura.lleno && (
+              <p className="text-secondary small">
+                No se registró el ingreso ni se generó cobro. El intento quedó en el registro de eventos.
+              </p>
+            )}
             <IndicadorBarrera abierta={lectura.resultado === 'PERMITIDO'} />
           </>
         )}
