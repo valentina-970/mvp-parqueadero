@@ -4,6 +4,7 @@ import { Form, Button, Alert } from 'react-bootstrap';
 import { post } from '../services/api.js';
 import BannerResultado from '../components/BannerResultado.jsx';
 import EscenaSede from '../components/EscenaSede.jsx';
+import { useCupos } from '../hooks/useCupos.js';
 
 const CARRILES = {
   salida: { titulo: 'Salida', ruta: '/api/salida' },
@@ -18,12 +19,13 @@ const EJEMPLOS = { CARRO: 'ABC123', MOTO: 'XYZ12D' };
  */
 function interpretar(carril, respuesta) {
   if (carril === 'salida') {
-    return { abre: respuesta.abre, aviso: false, motivo: respuesta.motivo };
+    return { abre: respuesta.abre, aviso: false, lleno: false, motivo: respuesta.motivo };
   }
   return {
     abre: respuesta.resultado === 'PERMITIDO',
     aviso: respuesta.resultado === 'PENDIENTE_VALIDACION',
-    motivo: respuesta.motivo,
+    lleno: respuesta.lleno === true,
+    motivo: respuesta.lleno ? respuesta.motivo.replace(/^LLENO:\s*/, '') : respuesta.motivo,
   };
 }
 
@@ -40,6 +42,8 @@ export default function Simulador() {
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [version, setVersion] = useState(0);
+  const cupos = useCupos(version);
 
   const configuracion = CARRILES[carril];
   if (!configuracion) {
@@ -61,6 +65,7 @@ export default function Simulador() {
     try {
       const respuesta = await post(configuracion.ruta, { placa, confianza });
       setResultado({ ...interpretar(carril, respuesta), placa: respuesta.placa });
+      setVersion((v) => v + 1); // actualiza los cupos de inmediato
     } catch (e) {
       setResultado(null);
       setError(e.estado === 400 ? 'Revisa la placa y el nivel de confianza' : e.message);
@@ -86,7 +91,8 @@ export default function Simulador() {
       <div className="my-3" aria-live="polite">
         {resultado && (
           <BannerResultado tipo={resultado.aviso ? 'aviso' : resultado.abre ? 'exito' : 'error'}>
-            {resultado.aviso ? 'VALIDACIÓN MANUAL' : resultado.abre ? 'ABRE' : 'NO ABRE'} · {resultado.motivo}
+            {resultado.aviso ? 'VALIDACIÓN MANUAL' : resultado.lleno ? 'LLENO' : resultado.abre ? 'ABRE' : 'NO ABRE'} ·{' '}
+            {resultado.motivo}
           </BannerResultado>
         )}
       </div>
@@ -139,6 +145,14 @@ export default function Simulador() {
           {enviando ? 'Enviando…' : 'Enviar lectura'}
         </Button>
       </Form>
+
+      <div className="d-flex flex-wrap gap-2 mt-3" aria-label="Cupos disponibles">
+        {cupos.map((cupo) => (
+          <span key={cupo.codigo} className={`chip-cupo ${cupo.lleno ? 'chip-lleno' : ''}`}>
+            {cupo.nombre}s {cupo.lleno ? 'LLENO' : `${cupo.disponibles} libres`}
+          </span>
+        ))}
+      </div>
     </main>
   );
 }
