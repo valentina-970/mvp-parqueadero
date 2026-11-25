@@ -49,13 +49,11 @@ class CuposIntegracionTest {
 
     private UUID sede;
     private UUID carro;
-    private UUID moto;
 
     @BeforeEach
     void preparar() {
         sede = sedeActual.id();
         carro = tipo("CARRO");
-        moto = tipo("MOTO");
         // El cupo de carros queda con un solo lugar libre, sin importar lo que haya adentro
         int adentro = cupos.deTipo(sede, carro).orElseThrow().ocupados();
         jdbc.update("UPDATE cupo SET capacidad = ? WHERE sede_id = ? AND tipo_vehiculo_id = ?",
