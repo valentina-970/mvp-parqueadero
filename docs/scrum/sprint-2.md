@@ -27,7 +27,7 @@ Completar las funcionalidades obligatorias (lectura manual, cupos, administraci�
 | HU-07 | Controlar los cupos por tipo de vehículo | Juan Manuel | 2 | En revisión |
 | HU-08 | Administrar tarifas, franjas y cupos | Valentina | 3 | En progreso |
 | HU-09 | Consultar eventos y cobros | Juan | 2 | En revisión |
-| TT-11 | Lectura de placas con la cámara del celular (reemplaza a TT-10) | Juan | 2 | Por hacer |
+| TT-11 | Lectura de placas con la cámara del celular (reemplaza a TT-10) | Juan | 2 | En revisión |
 | TT-08 | Release v1.0.0 hacia `main`, con commits de los cuatro integrantes | Juan Manuel | — | Por hacer |
 | OBS-1 | Mostrar el cobro generado en la pantalla de entrada | Juan | — | Terminado |
 | OBS-2 | Rechazo limpio de ingresos simultáneos de la misma placa (bloqueo de la fila de cupo) | Juan | — | Terminado |
