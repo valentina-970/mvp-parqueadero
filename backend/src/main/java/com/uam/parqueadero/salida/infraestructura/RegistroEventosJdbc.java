@@ -31,8 +31,26 @@ public class RegistroEventosJdbc implements RegistroEventos {
                 VALUES (?, ?, 'SALIDA', ?, ?, ?, ?, 'AUTOMATICA', ?, ?, ?, ?)
                 """,
                 id, evento.sedeId(), evento.placa(), evento.placaLeida(), evento.tipoVehiculoId(),
-                evento.confianza(), evento.permitido() ? "PERMITIDO" : "RECHAZADO", evento.motivo(),
+                evento.confianza(), resultado(evento), evento.motivo(),
                 OffsetDateTime.ofInstant(evento.ocurridoEn(), reloj.getZone()), evento.diaOperativo());
         return id;
+    }
+
+    @Override
+    public void resolverManual(UUID eventoId, EventoSalida evento, String usuario) {
+        jdbc.update("""
+                UPDATE evento_acceso
+                SET placa = ?, tipo_vehiculo_id = ?, tipo_lectura = 'MANUAL', resultado = ?, motivo = ?,
+                    validado_por_id = (SELECT id FROM usuario WHERE nombre_usuario = ?)
+                WHERE id = ?
+                """,
+                evento.placa(), evento.tipoVehiculoId(), resultado(evento), evento.motivo(), usuario, eventoId);
+    }
+
+    private static String resultado(EventoSalida evento) {
+        if (evento.pendiente()) {
+            return "PENDIENTE_VALIDACION";
+        }
+        return evento.permitido() ? "PERMITIDO" : "RECHAZADO";
     }
 }

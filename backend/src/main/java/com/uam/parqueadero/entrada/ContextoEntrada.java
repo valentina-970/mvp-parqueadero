@@ -16,6 +16,7 @@ public class ContextoEntrada {
     private final LecturaPlaca lectura;
     private final UUID sedeId;
     private final Instant ahora;
+    private final boolean manual;
     private TipoVehiculoDetectado tipo;
     private EstadoIngreso estado = EstadoIngreso.PERMITIDO;
     private String motivo = MOTIVO_REGISTRADO;
@@ -23,9 +24,24 @@ public class ContextoEntrada {
     private boolean lleno;
 
     public ContextoEntrada(LecturaPlaca lectura, UUID sedeId, Instant ahora) {
+        this(lectura, sedeId, ahora, false);
+    }
+
+    private ContextoEntrada(LecturaPlaca lectura, UUID sedeId, Instant ahora, boolean manual) {
         this.lectura = lectura;
         this.sedeId = sedeId;
         this.ahora = ahora;
+        this.manual = manual;
+    }
+
+    /** Contexto de una lectura que el operador ya confirmó o corrigió (HU-06). */
+    public static ContextoEntrada manual(LecturaPlaca lectura, UUID sedeId, Instant ahora) {
+        return new ContextoEntrada(lectura, sedeId, ahora, true);
+    }
+
+    /** {@code true} si la placa la validó el operador; entonces no se vuelve a exigir confianza. */
+    public boolean manual() {
+        return manual;
     }
 
     public LecturaPlaca lectura() {

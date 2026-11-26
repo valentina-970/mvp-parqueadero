@@ -25,7 +25,7 @@ const MENSAJES_LECTURA = {
  */
 function interpretar(carril, respuesta) {
   if (carril === 'salida') {
-    return { abre: respuesta.abre, aviso: false, lleno: false, motivo: respuesta.motivo };
+    return { abre: respuesta.abre, aviso: respuesta.pendiente === true, lleno: false, motivo: respuesta.motivo };
   }
   return {
     abre: respuesta.resultado === 'PERMITIDO',

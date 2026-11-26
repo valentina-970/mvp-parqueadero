@@ -18,17 +18,34 @@ public class ContextoSalida {
     private final Instant ahora;
     private final String placa;
     private final UUID sedeId;
+    private final boolean manual;
     private TipoVehiculoDetectado tipo;
     private EstanciaAbierta estancia;
     private String motivoRechazo;
     private String motivoAutorizacion = "Salida autorizada";
     private BigDecimal valorPendiente;
+    private String motivoPendiente;
 
     public ContextoSalida(SolicitudSalida solicitud, String placaNormalizada, UUID sedeId, Instant ahora) {
+        this(solicitud, placaNormalizada, sedeId, ahora, false);
+    }
+
+    private ContextoSalida(SolicitudSalida solicitud, String placaNormalizada, UUID sedeId, Instant ahora,boolean manual) {
         this.solicitud = solicitud;
         this.placa = placaNormalizada;
         this.sedeId = sedeId;
         this.ahora = ahora;
+        this.manual = manual;
+    }
+
+    /** Contexto de una salida cuya placa ya confirmó o corrigió el operador (HU-06). */
+    public static ContextoSalida manual(SolicitudSalida solicitud, String placaNormalizada, UUID sedeId,Instant ahora) {
+        return new ContextoSalida(solicitud, placaNormalizada, sedeId, ahora, true);
+    }
+
+    /** {@code true} si la placa la validó el operador; entonces no se vuelve a exigir confianza. */
+    public boolean manual() {
+        return manual;
     }
 
     public SolicitudSalida solicitud() {
@@ -99,5 +116,21 @@ public class ContextoSalida {
 
     public String motivoRechazo() {
         return motivoRechazo;
+    }
+
+    /**
+     * Deja la salida esperando la validación del operador (HU-06, CA-7): la barrera no se mueve
+     * y la cadena se detiene en el paso que llama a este método.
+     */
+    public void dejarPendiente(String motivo) {
+        this.motivoPendiente = motivo;
+    }
+
+    public boolean pendiente() {
+        return motivoPendiente != null;
+    }
+
+    public String motivoPendiente() {
+        return motivoPendiente;
     }
 }

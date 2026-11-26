@@ -64,7 +64,7 @@ export default function CarrilEntrada({ version }) {
             </div>
             <Fila etiqueta="Tipo de vehículo" valor={lectura.tipoVehiculo ?? '—'} />
             <Fila etiqueta="Confianza" valor={`${Math.round(lectura.confianza * 100)} %`} />
-            <Fila etiqueta="Lectura" valor="Automática" />
+            <Fila etiqueta="Lectura" valor={lectura.manual ? 'Manual (operador)' : 'Automática'} />
             <Fila
               etiqueta="Hora"
               valor={new Date(lectura.ocurridoEn).toLocaleTimeString('es-CO', {

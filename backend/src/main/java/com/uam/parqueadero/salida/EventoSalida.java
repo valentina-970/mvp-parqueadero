@@ -9,9 +9,11 @@ import java.util.UUID;
  * Intento de salida que queda en el registro de eventos (HU-04, CA-8).
  *
  * @param permitido     {@code true} si la barrera abrió; {@code false} si fue rechazado
- * @param placaLeida    placa tal como la envió el lector, antes de normalizar
+* @param pendiente     {@code true} si la lectura espera la validación del operador (HU-06) 
+* @param placaLeida    placa tal como la envió el lector, antes de normalizar
  * @param diaOperativo  día operativo al que pertenece el intento
  */
+
 public record EventoSalida(
         UUID sedeId,
         String placa,
@@ -19,6 +21,7 @@ public record EventoSalida(
         UUID tipoVehiculoId,
         BigDecimal confianza,
         boolean permitido,
+        boolean pendiente,
         String motivo,
         Instant ocurridoEn,
         LocalDate diaOperativo) {

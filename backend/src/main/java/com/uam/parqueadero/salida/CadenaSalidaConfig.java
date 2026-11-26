@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.uam.parqueadero.comun.ClasificadorPlacas;
+import com.uam.parqueadero.comun.UmbralConfianza;
 
 /**
  * Arma la cadena de validaciones de la salida en el orden en que se aplican.
@@ -14,10 +15,11 @@ import com.uam.parqueadero.comun.ClasificadorPlacas;
 public class CadenaSalidaConfig {
 
     @Bean
-    PasoSalida cadenaSalida(ClasificadorPlacas clasificador, Estancias estancias,
+    PasoSalida cadenaSalida(ClasificadorPlacas clasificador, UmbralConfianza umbral, Estancias estancias,
             CobrosDelDia cobros, Clock reloj) {
         PasoSalida primero = new ValidarPlacaPaso(clasificador);
-        primero.enlazar(new VerificarIngresoPaso(estancias))
+        primero.enlazar(new VerificarConfianzaSalidaPaso(umbral))
+                .enlazar(new VerificarIngresoPaso(estancias))
                 .enlazar(new VerificarDeudaPaso(cobros, reloj));
         // Los pasos siguientes se enlazan aquí, a continuación del último
         return primero;

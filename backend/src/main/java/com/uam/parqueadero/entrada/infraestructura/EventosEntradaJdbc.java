@@ -35,4 +35,15 @@ public class EventosEntradaJdbc implements EventosEntrada {
                 OffsetDateTime.ofInstant(evento.ocurridoEn(), reloj.getZone()), evento.diaOperativo());
         return id;
     }
+    @Override
+    public void resolverManual(UUID eventoId, EventoEntrada evento, String usuario) {
+        jdbc.update("""
+                UPDATE evento_acceso
+                SET placa = ?, tipo_vehiculo_id = ?, tipo_lectura = 'MANUAL', resultado = ?, motivo = ?,
+                    validado_por_id = (SELECT id FROM usuario WHERE nombre_usuario = ?)
+                WHERE id = ?
+                """,
+                evento.placa(), evento.tipoVehiculoId(), evento.resultado().name(), evento.motivo(),
+                usuario, eventoId);
+    }
 }

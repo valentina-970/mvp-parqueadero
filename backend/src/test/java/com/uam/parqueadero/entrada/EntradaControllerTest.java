@@ -44,7 +44,7 @@ class EntradaControllerTest {
 
     private ResultadoIngreso registrado() {
         return new ResultadoIngreso(EstadoIngreso.PERMITIDO, "Ingreso registrado", "ABC123", "Carro",
-                new BigDecimal("0.95"), Instant.now(), false);
+                new BigDecimal("0.95"), Instant.now(), false, false);
     }
 
     @Test
