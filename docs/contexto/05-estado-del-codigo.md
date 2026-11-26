@@ -105,6 +105,7 @@ El archivo `.env` es local y **no se sube**; `.env.example` documenta las variab
 - **Rutas:** `/login`, `/entrada`, `/salida`, `/administracion` y `/consultas`. Todas tienen interfaz menos `/administracion`, que sigue siendo un marcador (`components/Pagina`) hasta HU-08.
 - **Componentes compartidos según los mockups:** `PlacaVisual` (placa amarilla), `BannerResultado` (verde, rojo o amarillo), `IndicadorBarrera`. Están pensados para que los usen las demás pantallas.
 - **Vista de la sede para el celular (TT-09):** `pages/Simulador` en `/simulador/salida` y `/simulador/entrada` (`/simulador` lleva a la salida). Tema oscuro y pantalla de celular, según el mockup: `components/EscenaSede` dibuja la vía, el vehículo con su placa y la barrera (se levanta y se pone verde cuando abre), un banner "ABRE · motivo" o "NO ABRE · motivo", y el formulario con tipo de vehículo, placa y confianza. Llama a `/api/salida` o `/api/entrada` y adapta cada respuesta (la salida responde `abre`; la entrada, `resultado`). Requiere sesión, pero no muestra la barra superior. Desde el celular se abre con la IP del computador: `http://IP-DEL-PC:5173/simulador/salida`; al iniciar sesión vuelve a la pantalla que se pidió.
+- **Lectura con la cámara del celular (TT-11):** en el simulador, el botón "📷 Leer con la cámara" toma una foto con la cámara trasera y la lee en el navegador con Tesseract.js, sin servidor de OCR. `services/procesadorPlaca.js` (funciones puras sobre los píxeles) busca la zona amarilla con forma de placa, rechaza la foto si el flash la dejó blanca y deja solo los seis caracteres grandes, sin ciudad, tornillos, borde ni sello. `services/lectorCamara.js` es el adaptador: pasa esos caracteres al OCR como una sola línea, busca el patrón AAA123 o AAA12A, corrige confusiones típicas (O y 0, B y 8…) y devuelve `{ placa, confianza }` con la confianza entre 0 y 1, o un motivo (`SIN_PLACA` o `REFLEJO`). El simulador envía la lectura al carril como cualquier otra, así que el backend no cambia. Si el último carácter es 1/I o 0/O, decide el tipo elegido (Carro o Moto); si es una letra clara, el tipo cambia solo a Moto.
 - **`pages/Entrada`:** carril de entrada (`components/CarrilEntrada`, consulta `/api/entrada/ultimo` cada 2 segundos) y, a la derecha, `components/SimuladorLectura`, un formulario de placa y confianza que envía la lectura a la ruta que recibe (sirve también para la salida). El banner amarillo (`.banner-aviso`) marca las lecturas que requieren validación manual. Cuando el ingreso es permitido, `components/CobroGenerado` consulta la caja y muestra el cobro generado o "Sin cobro".
 - **`pages/Salida`:** carril de salida (`components/CarrilSalida`, consulta `/api/salida/ultima` cada 2 segundos) y, a la derecha, `components/CajaPago`: busca la placa, muestra día operativo, franja, tarifa, valor y estado (`components/EstadoBadge`), calcula el cambio mientras se escribe el efectivo (`utils/formato.js`), registra el pago y muestra el resumen con el pase vigente y el operador. Si el cobro está pagado, anulado o vencido, lo explica en lugar de pedir el efectivo.
 - **Validación manual (HU-06):** `components/ValidacionManual`, debajo del carril en `/entrada` y en `/salida`. Consulta las lecturas pendientes de su carril cada 2 segundos y solo aparece si hay alguna: placa leída, confianza y un campo con la placa, con el botón Confirmar o, si el operador la cambia, Corregir y validar. El carril muestra después "Lectura: Manual (operador)", y la salida pendiente se ve como VALIDACIÓN MANUAL, también en el simulador del celular.
@@ -151,6 +152,16 @@ docker compose ps
 ```
 
 Comprobaciones: `http://localhost:8080/api/health` responde `{"estado":"ok"}` y `http://localhost:5173/login` muestra "API: conectada".
+
+**Desde el celular (simulador y cámara)**
+
+El celular debe estar en la misma red que el computador. Con `ipconfig` se busca la dirección IPv4 del computador y en el celular se abre `http://IP-DEL-PC:5173/simulador/entrada`. La primera vez hay que abrir el puerto en el firewall de Windows, desde una PowerShell como administrador y con la red en perfil privado:
+
+```powershell
+New-NetFirewallRule -DisplayName "Parqueadero 5173" -Direction Inbound -Protocol TCP -LocalPort 5173 -Action Allow -Profile Private
+```
+
+La primera lectura con la cámara tarda más (10 a 20 segundos) porque el celular descarga Tesseract.js, así que necesita internet además de la red local.
 
 Para apagar: `docker compose down` (con `-v` también borra los datos de la base).
 
