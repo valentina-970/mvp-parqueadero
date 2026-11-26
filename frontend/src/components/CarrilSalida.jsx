@@ -50,6 +50,7 @@ export default function CarrilSalida() {
             </div>
             <Fila etiqueta="Tipo de vehículo" valor={lectura.tipoVehiculo ?? '—'} />
             <Fila etiqueta="Confianza" valor={`${Math.round(lectura.confianza * 100)} %`} />
+            <Fila etiqueta="Lectura" valor={lectura.manual ? 'Manual (operador)' : 'Automática'} />
             <Fila
               etiqueta="Hora"
               valor={new Date(lectura.ocurridoEn).toLocaleTimeString('es-CO', {
@@ -58,11 +59,11 @@ export default function CarrilSalida() {
               })}
             />
             <div className="my-3">
-              <BannerResultado tipo={lectura.abre ? 'exito' : 'error'}>
-                {lectura.abre ? 'ABRE' : 'NO ABRE'}
+              <BannerResultado tipo={lectura.pendiente ? 'aviso' : lectura.abre ? 'exito' : 'error'}>
+                {lectura.pendiente ? 'VALIDACIÓN MANUAL' : lectura.abre ? 'ABRE' : 'NO ABRE'}
               </BannerResultado>
             </div>
-            <p className={`fw-semibold ${lectura.abre ? 'text-success' : 'text-danger'}`}>
+            <p className={`fw-semibold ${lectura.pendiente ? '' : lectura.abre ? 'text-success' : 'text-danger'}`}>
               Motivo: {lectura.motivo.charAt(0).toLowerCase() + lectura.motivo.slice(1)}
             </p>
             <IndicadorBarrera abierta={lectura.barrera === 'ABIERTA'} />
