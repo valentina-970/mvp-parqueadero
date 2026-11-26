@@ -14,6 +14,11 @@ const CARRILES = {
 
 const EJEMPLOS = { CARRO: 'ABC123', MOTO: 'XYZ12D' };
 
+const MENSAJES_LECTURA = {
+  SIN_PLACA: 'No se encontró una placa en la foto. Acércate más o escríbela abajo.',
+  REFLEJO: 'La placa tiene reflejo. Toma la foto sin flash y de frente.',
+};
+
 /**
  * Convierte la respuesta de cada carril en lo que muestra la pantalla. La salida responde
  * `abre`; la entrada responde `resultado` (PERMITIDO, PENDIENTE_VALIDACION o RECHAZADO).
@@ -90,9 +95,9 @@ export default function Simulador() {
     setError('');
     setLeyendo(true);
     try {
-      const lectura = await leerPlaca(foto);
-      if (!lectura) {
-        setError('No se encontró una placa en la foto. Acércate más o escríbela abajo.');
+      const lectura = await leerPlaca(foto, tipo);
+      if (lectura.motivo) {
+        setError(MENSAJES_LECTURA[lectura.motivo]);
         return;
       }
       // Las placas de moto terminan en letra (AAA12A); las de carro, en número
@@ -141,12 +146,15 @@ export default function Simulador() {
       <Button
         type="button"
         variant="light"
-        className="w-100 mb-3 fw-semibold"
+        className="w-100 mb-1 fw-semibold"
         disabled={leyendo || enviando}
         onClick={() => camara.current?.click()}
       >
         {leyendo ? 'Leyendo la placa…' : '📷 Leer con la cámara'}
       </Button>
+      <p className="sede-etiqueta text-center mb-3">
+        Elige primero si es carro o moto. Foto de frente y sin flash.
+      </p>
 
       <Form onSubmit={enviar} className="sede-formulario">
         <Form.Label className="small mb-1">Tipo de vehículo</Form.Label>
