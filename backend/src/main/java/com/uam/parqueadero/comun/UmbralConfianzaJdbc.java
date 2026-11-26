@@ -1,11 +1,9 @@
-package com.uam.parqueadero.entrada.infraestructura;
+package com.uam.parqueadero.comun;
 
 import java.math.BigDecimal;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-
-import com.uam.parqueadero.entrada.UmbralConfianza;
 
 /** Lee el umbral de la tabla {@code parametro}; si no existe, usa 0,80 (supuesto del enunciado). */
 @Repository

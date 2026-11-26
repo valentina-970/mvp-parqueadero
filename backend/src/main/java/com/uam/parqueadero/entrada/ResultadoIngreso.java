@@ -6,8 +6,8 @@ import java.time.Instant;
 /**
  * Respuesta del carril de entrada; es lo que muestra la pantalla del operador (CA-8).
  *
- * @param tipoVehiculo  nombre del tipo ("Carro" o "Moto"), o {@code null} si la placa no es válida
  * @param lleno         {@code true} si se rechazó porque no hay cupo para ese tipo (la pantalla muestra LLENO)
+ * @param manual        {@code true} si la placa la validó el operador (HU-06)
  */
 public record ResultadoIngreso(
         EstadoIngreso resultado,
@@ -16,5 +16,6 @@ public record ResultadoIngreso(
         String tipoVehiculo,
         BigDecimal confianza,
         Instant ocurridoEn,
-        boolean lleno) {
+        boolean lleno,
+        boolean manual) {
 }
