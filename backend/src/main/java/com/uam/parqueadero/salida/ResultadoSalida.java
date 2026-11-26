@@ -16,6 +16,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param barrera        posición de la barrera después del intento
  * @param confianza      confianza de la lectura recibida
  * @param ocurridoEn     momento del intento de salida
+* @param pendiente      {@code true} si la confianza fue baja y la salida espera la validación del operador (HU-06)
+ * @param manual         {@code true} si la placa la validó el operador (HU-06)
  */
 public record ResultadoSalida(
         boolean abre,
@@ -25,5 +27,7 @@ public record ResultadoSalida(
         @Schema(nullable = true) BigDecimal valorPendiente,
         EstadoBarrera barrera,
         BigDecimal confianza,
-        Instant ocurridoEn) {
+        Instant ocurridoEn,
+        boolean pendiente,
+        boolean manual) {
 }

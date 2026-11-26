@@ -20,10 +20,10 @@ public abstract class PasoSalida {
         return siguiente;
     }
 
-    /** Aplica la regla de este paso y continúa con el siguiente si no hubo rechazo. */
+    /** Aplica la regla de este paso y continúa con el siguiente si nadie decidió todavía. */
     public final void ejecutar(ContextoSalida contexto) {
         aplicar(contexto);
-        if (!contexto.rechazada() && siguiente != null) {
+        if (!contexto.rechazada() && !contexto.pendiente() && siguiente != null) {
             siguiente.ejecutar(contexto);
         }
     }

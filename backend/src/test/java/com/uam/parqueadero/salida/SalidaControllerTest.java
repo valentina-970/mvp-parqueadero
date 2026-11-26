@@ -46,7 +46,7 @@ class SalidaControllerTest {
     @WithMockUser(roles = "OPERADOR")
     void recibeLaPlacaYLaConfianzaYResponde() throws Exception {
         when(operacion.procesar(any())).thenReturn(new ResultadoSalida(
-                true, "Salida autorizada", "ABC123", "Carro", null, EstadoBarrera.ABIERTA, new BigDecimal("0.95"), Instant.now()));
+                true, "Salida autorizada", "ABC123", "Carro", null, EstadoBarrera.ABIERTA, new BigDecimal("0.95"), Instant.now(), false, false));
 
         mvc.perform(post("/api/salida").contentType(MediaType.APPLICATION_JSON).content(CUERPO_VALIDO))
                 .andExpect(status().isOk())
@@ -76,7 +76,7 @@ class SalidaControllerTest {
     void laUltimaSalidaSeConsultaParaLaPantalla() throws Exception {
         when(ultimaSalida.ultima()).thenReturn(Optional.of(new ResultadoSalida(
                 false, "Cobro pendiente por $5.000", "ABC123", "Carro", new BigDecimal("5000"),
-                EstadoBarrera.CERRADA, new BigDecimal("0.97"), Instant.now())));
+                EstadoBarrera.CERRADA, new BigDecimal("0.97"), Instant.now(), false, false)));
 
         mvc.perform(get("/api/salida/ultima"))
                 .andExpect(status().isOk())
