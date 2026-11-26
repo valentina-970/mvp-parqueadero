@@ -45,6 +45,11 @@ El MVP no construye hardware propio. La placa se lee con la **cámara del celula
 
 **Cámara del celular (TT-11, decisión del 23 de noviembre):** en la vista de la sede, el botón "Leer con la cámara" toma una foto con la cámara trasera (`<input type="file" capture="environment">`, que funciona por HTTP en la red local) y la lee con Tesseract.js en el navegador del propio celular, sin costo ni servidor de OCR. Un módulo adaptador limpia el texto y convierte la confianza de 0–100 a 0–1, y envía la placa a los mismos endpoints de entrada y salida, así que el backend no cambia. Las lecturas con confianza baja pasan a la validación manual de HU-06. Esto completa el CA-1 de HU-01 ("desde el simulador o la carga de una imagen").
 
+**Ajustes tras las pruebas con placas reales (25 de noviembre):** leer la foto completa no funcionó con placas reales, porque el OCR encontraba letras en la rejilla, el piso y los logos. Ahora la lectura busca primero la placa y lee solo sus caracteres. Además:
+
+- Las fotos con flash se rechazan con el aviso "La placa tiene reflejo". El reflejo borra letras, y en las pruebas producía placas equivocadas con confianza alta.
+- **Supuesto nuevo:** el tipo de vehículo se elige antes de la foto, como si cada carril fuera de un solo tipo. Si el último carácter es 1/I o 0/O, que el OCR no distingue en la letra de las placas, decide ese tipo. Límite conocido: con el tipo equivocado, una moto terminada en I entra como carro.
+
 ## Gitflow
 
 - `main` solo recibe versiones liberadas; `develop` es la rama de integración. Ambas protegidas: solo cambian con un pull request aprobado por otro integrante.

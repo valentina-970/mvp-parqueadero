@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { Form, Button, Alert } from 'react-bootstrap';
 import { post } from '../services/api.js';
 import BannerResultado from '../components/BannerResultado.jsx';
 import EscenaSede from '../components/EscenaSede.jsx';
 import { useCupos } from '../hooks/useCupos.js';
+import { leerPlaca } from '../services/lectorCamara.js';
 
 const CARRILES = {
   salida: { titulo: 'Salida', ruta: '/api/salida' },
@@ -12,6 +13,11 @@ const CARRILES = {
 };
 
 const EJEMPLOS = { CARRO: 'ABC123', MOTO: 'XYZ12D' };
+
+const MENSAJES_LECTURA = {
+  SIN_PLACA: 'No se encontró una placa en la foto. Acércate más o escríbela abajo.',
+  REFLEJO: 'La placa tiene reflejo. Toma la foto sin flash y de frente.',
+};
 
 /**
  * Convierte la respuesta de cada carril en lo que muestra la pantalla. La salida responde
@@ -43,6 +49,8 @@ export default function Simulador() {
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [version, setVersion] = useState(0);
+  const [leyendo, setLeyendo] = useState(false);
+  const camara = useRef(null);
   const cupos = useCupos(version);
 
   const configuracion = CARRILES[carril];
@@ -58,12 +66,12 @@ export default function Simulador() {
     }
   };
 
-  const enviar = async (evento) => {
-    evento.preventDefault();
+  /** Envía la lectura al carril, venga del formulario o de la cámara. */
+  const enviarLectura = async (placaLeida, confianzaLeida) => {
     setError('');
     setEnviando(true);
     try {
-      const respuesta = await post(configuracion.ruta, { placa, confianza });
+      const respuesta = await post(configuracion.ruta, { placa: placaLeida, confianza: confianzaLeida });
       setResultado({ ...interpretar(carril, respuesta), placa: respuesta.placa });
       setVersion((v) => v + 1); // actualiza los cupos de inmediato
     } catch (e) {
@@ -71,6 +79,36 @@ export default function Simulador() {
       setError(e.estado === 400 ? 'Revisa la placa y el nivel de confianza' : e.message);
     } finally {
       setEnviando(false);
+    }
+  };
+
+  const enviar = (evento) => {
+    evento.preventDefault();
+    enviarLectura(placa, confianza);
+  };
+
+  /** TT-11: lee la placa de la foto y la envía como lo haría la cámara del carril. */
+  const leerConCamara = async (evento) => {
+    const foto = evento.target.files?.[0];
+    evento.target.value = '';
+    if (!foto) return;
+    setError('');
+    setLeyendo(true);
+    try {
+      const lectura = await leerPlaca(foto, tipo);
+      if (lectura.motivo) {
+        setError(MENSAJES_LECTURA[lectura.motivo]);
+        return;
+      }
+      // Las placas de moto terminan en letra (AAA12A); las de carro, en número
+      setTipo(/[A-Z]$/.test(lectura.placa) ? 'MOTO' : 'CARRO');
+      setPlaca(lectura.placa);
+      setConfianza(lectura.confianza);
+      await enviarLectura(lectura.placa, lectura.confianza);
+    } catch {
+      setError('No se pudo leer la foto. Intenta de nuevo o escribe la placa.');
+    } finally {
+      setLeyendo(false);
     }
   };
 
@@ -96,6 +134,27 @@ export default function Simulador() {
           </BannerResultado>
         )}
       </div>
+
+      <input
+        ref={camara}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="d-none"
+        onChange={leerConCamara}
+      />
+      <Button
+        type="button"
+        variant="light"
+        className="w-100 mb-1 fw-semibold"
+        disabled={leyendo || enviando}
+        onClick={() => camara.current?.click()}
+      >
+        {leyendo ? 'Leyendo la placa…' : '📷 Leer con la cámara'}
+      </Button>
+      <p className="sede-etiqueta text-center mb-3">
+        Elige primero si es carro o moto. Foto de frente y sin flash.
+      </p>
 
       <Form onSubmit={enviar} className="sede-formulario">
         <Form.Label className="small mb-1">Tipo de vehículo</Form.Label>
