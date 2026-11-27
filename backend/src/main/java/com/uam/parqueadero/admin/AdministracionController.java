@@ -24,6 +24,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 /** API de configuración del parqueadero, accesible únicamente para administradores. */
@@ -38,7 +40,7 @@ public class AdministracionController {
         this.parqueadero = parqueadero;
     }
 
-    /** Devuelve tarifas y horarios. */
+    /** Devuelve tarifas, horarios y cupos. */
     @Operation(summary = "Consultar la configuración del parqueadero")
     @GetMapping("/configuracion")
     public ConfiguracionParqueadero consultar() {
@@ -67,6 +69,14 @@ public class AdministracionController {
     public void horarios(@Valid @RequestBody HorariosSolicitud solicitud) {
         parqueadero.cambiarHorarios(new Horarios(solicitud.inicioDiurno(), solicitud.finDiurno(),
                 solicitud.inicioNocturno(), solicitud.finNocturno()));
+    }
+
+    /** Modifica la capacidad del tipo indicado. */
+    @Operation(summary = "Cambiar el cupo de un tipo de vehículo")
+    @PostMapping("/cupos/{tipo}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cupo(@PathVariable UUID tipo, @Valid @RequestBody CupoSolicitud solicitud) {
+        parqueadero.cambiarCupo(tipo, solicitud.capacidad().intValueExact());
     }
 
     /** Devuelve el motivo del rechazo de una regla de configuración. */
@@ -98,6 +108,15 @@ public class AdministracionController {
                                     @NotNull(message = "Ingresa el fin diurno") LocalTime finDiurno,
                                     @NotNull(message = "Ingresa el inicio nocturno") LocalTime inicioNocturno,
                                     @NotNull(message = "Ingresa el fin nocturno") LocalTime finNocturno) {
+    }
+
+    /** Capacidad solicitada. */
+    public record CupoSolicitud(
+            @NotNull(message = "Ingresa la capacidad")
+            @Digits(integer = 10, fraction = 0, message = "La capacidad debe ser un número entero")
+            @Max(value = Integer.MAX_VALUE, message = "La capacidad supera el valor permitido")
+            @Min(value = 0, message = "La capacidad no puede ser negativa")
+            BigDecimal capacidad) {
     }
 
 }

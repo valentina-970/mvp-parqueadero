@@ -1,9 +1,11 @@
 package com.uam.parqueadero.admin;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,25 +16,32 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InOrder;
 
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
 import com.uam.parqueadero.comun.SedeActual;
+import com.uam.parqueadero.cupo.Cupo;
+import com.uam.parqueadero.cupo.CuposDeLaSede;
+import com.uam.parqueadero.entrada.BloqueoCupos;
 
 class AdministrarParqueaderoTest {
 
     private final UUID sedeId = UUID.randomUUID();
     private final UUID tipoId = UUID.randomUUID();
     private final ConfiguracionAdministrable datos = mock(ConfiguracionAdministrable.class);
+    private final CuposDeLaSede cupos = mock(CuposDeLaSede.class);
+    private final BloqueoCupos bloqueo = mock(BloqueoCupos.class);
     private final SedeActual sede = () -> sedeId;
     private final Clock reloj = Clock.fixed(Instant.parse("2026-11-26T15:00:00Z"), ZoneOffset.UTC);
     private final AdministrarParqueadero administracion =
-            new AdministrarParqueadero(datos, sede, reloj);
+            new AdministrarParqueadero(datos, cupos, bloqueo, sede, reloj);
 
     @BeforeEach
     void preparar() {
@@ -99,6 +108,30 @@ class AdministrarParqueaderoTest {
         administracion.cambiarHorarios(propuestos);
 
         verify(datos).guardarHorarios(propuestos);
+    }
+
+    /** CP-08-08: consulta ocupación bajo el mismo bloqueo de los ingresos. */
+    @Test
+    void rechazaCupoPorDebajoDeLaOcupacion() {
+        when(cupos.deTipo(sedeId, tipoId)).thenReturn(Optional.of(new Cupo(tipoId, "CARRO", "Carro", 40, 3)));
+
+        var error = assertThrows(ConfiguracionInvalidaException.class,
+                () -> administracion.cambiarCupo(tipoId, 2));
+
+        InOrder orden = inOrder(bloqueo, cupos);
+        orden.verify(bloqueo).bloquear(sedeId, tipoId);
+        orden.verify(cupos).deTipo(sedeId, tipoId);
+        assertEquals("El cupo no puede ser menor que los vehículos adentro (3)", error.getMessage());
+        verify(datos, never()).guardarCupo(any(), any(), eq(2));
+    }
+
+    @Test
+    void guardaCupoIgualALaOcupacion() {
+        when(cupos.deTipo(sedeId, tipoId)).thenReturn(Optional.of(new Cupo(tipoId, "CARRO", "Carro", 40, 3)));
+
+        administracion.cambiarCupo(tipoId, 3);
+
+        verify(datos).guardarCupo(sedeId, tipoId, 3);
     }
 
 }

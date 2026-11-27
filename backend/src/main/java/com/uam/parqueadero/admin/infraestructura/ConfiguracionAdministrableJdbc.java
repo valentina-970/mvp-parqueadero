@@ -86,4 +86,13 @@ public class ConfiguracionAdministrableJdbc implements ConfiguracionAdministrabl
                 """, horarios.inicioDiurno(), horarios.inicioNocturno(), horarios.finDiurno(), horarios.finNocturno());
     }
 
+    @Override
+    public void guardarCupo(UUID sede, UUID tipo, int capacidad) {
+        jdbc.update("""
+                INSERT INTO cupo (sede_id, tipo_vehiculo_id, capacidad)
+                VALUES (?, ?, ?)
+                ON CONFLICT (sede_id, tipo_vehiculo_id) DO UPDATE SET capacidad = EXCLUDED.capacidad
+                """, sede, tipo, capacidad);
+    }
+
 }

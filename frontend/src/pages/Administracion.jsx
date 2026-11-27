@@ -103,6 +103,28 @@ function Horarios({ horarios }) {
   );
 }
 
+function Cupos({ tipos, cupos, alGuardar }) {
+  return (
+    <Seccion titulo="Cupos por tipo" descripcion="La capacidad no puede quedar por debajo de los vehículos que están adentro.">
+      {tipos.map(({ tipoId, nombre }) => {
+        const cupo = cupos.find((dato) => dato.tipoVehiculoId === tipoId);
+        return (
+          <FormularioConfiguracion
+            key={tipoId}
+            titulo={nombre}
+            ruta={`/api/admin/cupos/${tipoId}`}
+            convertir={(valores) => ({ capacidad: Number(valores.capacidad) })}
+            alGuardar={alGuardar}
+          >
+            <Campo etiqueta="Capacidad" nombre="capacidad" valor={cupo?.capacidad} min="0" max="2147483647" step="1" />
+            <Col xs="auto"><span className="small text-secondary">Ocupados: {cupo?.ocupados ?? 0}</span></Col>
+          </FormularioConfiguracion>
+        );
+      })}
+    </Seccion>
+  );
+}
+
 /** Configuración de la sede, disponible para el rol administrador (HU-08). */
 export default function Administracion() {
   const [configuracion, setConfiguracion] = useState(null);
@@ -141,6 +163,7 @@ export default function Administracion() {
         <>
           <Tarifas tarifas={configuracion.tarifas} />
           <Horarios horarios={configuracion.horarios} />
+          <Cupos tipos={configuracion.tarifas} cupos={configuracion.cupos} alGuardar={recargar} />
         </>
       ) : !error && <p className="text-secondary">Cargando…</p>}
     </>

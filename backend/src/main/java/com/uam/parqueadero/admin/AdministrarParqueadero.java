@@ -14,17 +14,25 @@ import org.springframework.transaction.annotation.Transactional;
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Tarifas;
 import com.uam.parqueadero.comun.SedeActual;
+import com.uam.parqueadero.cupo.Cupo;
+import com.uam.parqueadero.cupo.CuposDeLaSede;
+import com.uam.parqueadero.entrada.BloqueoCupos;
 
 /** Valida y aplica la configuración administrativa del parqueadero (HU-08). */
 @Service
 public class AdministrarParqueadero {
 
     private final ConfiguracionAdministrable configuracion;
+    private final CuposDeLaSede cupos;
+    private final BloqueoCupos bloqueoCupos;
     private final SedeActual sede;
     private final Clock reloj;
 
-    public AdministrarParqueadero(ConfiguracionAdministrable configuracion, SedeActual sede, Clock reloj) {
+    public AdministrarParqueadero(ConfiguracionAdministrable configuracion,
+                                   CuposDeLaSede cupos, BloqueoCupos bloqueoCupos, SedeActual sede, Clock reloj) {
         this.configuracion = configuracion;
+        this.cupos = cupos;
+        this.bloqueoCupos = bloqueoCupos;
         this.sede = sede;
         this.reloj = reloj;
     }
@@ -33,7 +41,7 @@ public class AdministrarParqueadero {
     @Transactional(readOnly = true)
     public ConfiguracionParqueadero consultar() {
         UUID sedeId = sede.id();
-        return new ConfiguracionParqueadero(configuracion.tarifas(sedeId), configuracion.horarios());
+        return new ConfiguracionParqueadero(configuracion.tarifas(sedeId), configuracion.horarios(), cupos.todos(sedeId));
     }
 
     /** Consulta las tarifas vigentes de la sede. */
@@ -70,6 +78,19 @@ public class AdministrarParqueadero {
             throw new ConfiguracionInvalidaException("Las franjas deben cubrir las 24 horas sin solaparse ni dejar huecos");
         }
         configuracion.guardarHorarios(horarios);
+    }
+
+    /** Cambia la capacidad sin quitar lugares a vehículos que ya están adentro. */
+    @Transactional
+    public void cambiarCupo(UUID tipo, int capacidad) {
+        UUID sedeId = sede.id();
+        exigirTipo(tipo);
+        bloqueoCupos.bloquear(sedeId, tipo);
+        int ocupados = cupos.deTipo(sedeId, tipo).map(Cupo::ocupados).orElse(0);
+        if (capacidad < ocupados) {
+            throw new ConfiguracionInvalidaException("El cupo no puede ser menor que los vehículos adentro (" + ocupados + ")");
+        }
+        configuracion.guardarCupo(sedeId, tipo, capacidad);
     }
 
     private String exigirTipo(UUID tipo) {

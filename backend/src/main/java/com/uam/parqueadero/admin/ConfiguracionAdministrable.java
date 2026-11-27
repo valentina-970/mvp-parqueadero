@@ -26,4 +26,7 @@ public interface ConfiguracionAdministrable {
     /** Guarda el par de horarios en la misma transacción. */
     void guardarHorarios(Horarios horarios);
 
+    /** Crea o actualiza la capacidad del tipo para la sede. */
+    void guardarCupo(UUID sede, UUID tipo, int capacidad);
+
 }

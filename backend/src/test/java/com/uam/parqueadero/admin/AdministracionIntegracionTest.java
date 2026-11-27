@@ -2,6 +2,7 @@ package com.uam.parqueadero.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -58,6 +59,17 @@ class AdministracionIntegracionTest {
         administracion.cambiarHorarios(horarios);
 
         assertEquals(horarios, administracion.consultar().horarios());
+    }
+
+    @Test
+    void configuraLaCapacidadQueUsaElCarril() {
+        var carro = administracion.tarifas().stream().filter(t -> t.codigo().equals("CARRO")).findFirst().orElseThrow();
+
+        administracion.cambiarCupo(carro.tipoId(), 0);
+
+        var resultado = entrada.procesar(lectura("QHU803"));
+        assertEquals(EstadoIngreso.RECHAZADO, resultado.resultado());
+        assertTrue(resultado.lleno());
     }
 
     private static SolicitudIngreso lectura(String placa) {
