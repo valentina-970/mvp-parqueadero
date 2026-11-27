@@ -114,7 +114,7 @@ El archivo `.env` es local y **no se sube**; `.env.example` documenta las variab
 - **`pages/Login`:** inicio de sesión real contra `/api/auth/login`, según el mockup (mensaje de error genérico).
 - **`auth/`:** `AuthProvider` guarda el usuario de la sesión (la recupera con `/api/auth/yo` al abrir la app) y ofrece `iniciarSesion` y `cerrarSesion`; `useAuth` lo expone a los componentes.
 - **`components/RutaProtegida`:** sin sesión lleva a `/login`; con rol insuficiente (por ejemplo, un operador en `/administracion`) vuelve a `/entrada`. **`components/Navegacion`** solo muestra Administración al administrador, el usuario y su rol, y "Cerrar sesión".
-- **`services/api.js`:** cliente de la API (`get` y `post`) que envía la cookie de sesión y lanza `ErrorApi` con el mensaje del servidor. La URL base sale de `VITE_API_URL`.
+- **`services/api.js`:** cliente de la API (`get` y `post`) que envía la cookie de sesión y lanza `ErrorApi` con el mensaje del servidor. Un fallo de conexión o una respuesta de proxy 502/503/504 sin mensaje de la API se muestra como «No se pudo conectar con el servidor» (OBS-7). La URL base sale de `VITE_API_URL`.
 - **`estilos.css`:** estilos globales según los mockups del equipo.
 - **Dos modos de ejecución:**
   - Desarrollo (`npm run dev`): `VITE_API_URL=http://localhost:8080`.
