@@ -1,13 +1,13 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Container } from "react-bootstrap";
 import Navegacion from "./components/Navegacion.jsx";
-import Pagina from "./components/Pagina.jsx";
 import RutaProtegida from "./components/RutaProtegida.jsx";
 import Login from "./pages/Login.jsx";
 import Salida from "./pages/Salida.jsx";
 import Entrada from "./pages/Entrada.jsx";
 import Simulador from "./pages/Simulador.jsx";
 import Consultas from "./pages/Consultas.jsx";
+import Administracion from "./pages/Administracion.jsx";
 
 /** Pantalla con la barra superior; el login se muestra sin ella. */
 function ConBarra({ roles, children }) {
@@ -64,7 +64,7 @@ export default function App() {
         path="/administracion"
         element={
           <ConBarra roles={["ADMINISTRADOR"]}>
-            <Pagina titulo="Administración" />
+            <Administracion />
           </ConBarra>
         }
       />
