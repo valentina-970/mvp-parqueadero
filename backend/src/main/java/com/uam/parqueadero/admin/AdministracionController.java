@@ -1,0 +1,136 @@
+package com.uam.parqueadero.admin;
+
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
+import com.uam.parqueadero.admin.ConfiguracionParqueadero.Tarifas;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
+/** API de configuración del parqueadero, accesible únicamente para administradores. */
+@RestController
+@RequestMapping("/api/admin")
+@Tag(name = "Administración", description = "Solo rol ADMINISTRADOR")
+public class AdministracionController {
+
+    private final AdministrarParqueadero parqueadero;
+
+    public AdministracionController(AdministrarParqueadero parqueadero) {
+        this.parqueadero = parqueadero;
+    }
+
+    /** Devuelve tarifas, horarios, cupos y umbral. */
+    @Operation(summary = "Consultar la configuración del parqueadero")
+    @GetMapping("/configuracion")
+    public ConfiguracionParqueadero consultar() {
+        return parqueadero.consultar();
+    }
+
+    /** Devuelve las tarifas vigentes por tipo de vehículo. */
+    @Operation(summary = "Listar las tarifas vigentes")
+    @GetMapping("/tarifas")
+    public List<Tarifas> tarifas() {
+        return parqueadero.tarifas();
+    }
+
+    /** Modifica las tarifas diurna y nocturna del tipo indicado. */
+    @Operation(summary = "Cambiar las tarifas de un tipo de vehículo")
+    @PostMapping("/tarifas/{tipo}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void tarifas(@PathVariable UUID tipo, @Valid @RequestBody TarifasSolicitud solicitud) {
+        parqueadero.cambiarTarifas(tipo, solicitud.diurna(), solicitud.nocturna());
+    }
+
+    /** Modifica los horarios de ambas franjas juntos. */
+    @Operation(summary = "Cambiar los horarios de las franjas")
+    @PostMapping("/horarios")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void horarios(@Valid @RequestBody HorariosSolicitud solicitud) {
+        parqueadero.cambiarHorarios(new Horarios(solicitud.inicioDiurno(), solicitud.finDiurno(),
+                solicitud.inicioNocturno(), solicitud.finNocturno()));
+    }
+
+    /** Modifica la capacidad del tipo indicado. */
+    @Operation(summary = "Cambiar el cupo de un tipo de vehículo")
+    @PostMapping("/cupos/{tipo}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cupo(@PathVariable UUID tipo, @Valid @RequestBody CupoSolicitud solicitud) {
+        parqueadero.cambiarCupo(tipo, solicitud.capacidad().intValueExact());
+    }
+
+    /** Modifica el umbral de confianza de ambos carriles. */
+    @Operation(summary = "Cambiar el umbral de confianza")
+    @PostMapping("/umbral")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void umbral(@Valid @RequestBody UmbralSolicitud solicitud) {
+        parqueadero.cambiarUmbral(solicitud.valor());
+    }
+
+    /** Devuelve el motivo del rechazo de una regla de configuración. */
+    @ExceptionHandler(ConfiguracionInvalidaException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+    public Map<String, String> configuracionInvalida(ConfiguracionInvalidaException error) {
+        return Map.of("mensaje", error.getMessage());
+    }
+
+    /** Devuelve el motivo cuando falta un valor o tiene precisión no admitida. */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> solicitudInvalida(MethodArgumentNotValidException error) {
+        return Map.of("mensaje", error.getBindingResult().getFieldErrors().getFirst().getDefaultMessage());
+    }
+
+    /** Las dos tarifas en pesos, con hasta dos decimales. */
+    public record TarifasSolicitud(
+            @NotNull(message = "Ingresa la tarifa diurna")
+            @Digits(integer = 10, fraction = 2, message = "La tarifa diurna admite 10 enteros y 2 decimales")
+            BigDecimal diurna,
+            @NotNull(message = "Ingresa la tarifa nocturna")
+            @Digits(integer = 10, fraction = 2, message = "La tarifa nocturna admite 10 enteros y 2 decimales")
+            BigDecimal nocturna) {
+    }
+
+    /** Límites inclusivos de las dos franjas (HH:mm). */
+    public record HorariosSolicitud(@NotNull(message = "Ingresa el inicio diurno") LocalTime inicioDiurno,
+                                    @NotNull(message = "Ingresa el fin diurno") LocalTime finDiurno,
+                                    @NotNull(message = "Ingresa el inicio nocturno") LocalTime inicioNocturno,
+                                    @NotNull(message = "Ingresa el fin nocturno") LocalTime finNocturno) {
+    }
+
+    /** Capacidad solicitada. */
+    public record CupoSolicitud(
+            @NotNull(message = "Ingresa la capacidad")
+            @Digits(integer = 10, fraction = 0, message = "La capacidad debe ser un número entero")
+            @Max(value = Integer.MAX_VALUE, message = "La capacidad supera el valor permitido")
+            @Min(value = 0, message = "La capacidad no puede ser negativa")
+            BigDecimal capacidad) {
+    }
+
+    /** Umbral de confianza; la precisión máxima corresponde al tamaño del parámetro persistido. */
+    public record UmbralSolicitud(
+            @NotNull(message = "Ingresa el umbral de confianza")
+            @Digits(integer = 1, fraction = 118, message = "El umbral debe estar entre 0 y 1")
+            BigDecimal valor) {
+    }
+}

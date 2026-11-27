@@ -14,11 +14,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.uam.parqueadero.controller.AdminTarifasController;
+import com.uam.parqueadero.admin.AdministracionController;
+import com.uam.parqueadero.admin.AdministrarParqueadero;
 import com.uam.parqueadero.controller.HealthController;
 
 /** Pruebas del acceso por rol con la cadena de seguridad real (CA-4, CA-5 y CA-7). */
-@WebMvcTest(controllers = { AdminTarifasController.class, HealthController.class })
+@WebMvcTest(controllers = { AdministracionController.class, HealthController.class })
 @Import(SecurityConfig.class)
 class SecurityConfigTest {
 
@@ -27,6 +28,9 @@ class SecurityConfigTest {
 
     @MockitoBean
     private UserDetailsService usuarios;
+
+    @MockitoBean
+    private AdministrarParqueadero administracion;
 
     /** CP-05-05 (error): el operador llama al endpoint de tarifas → 403. */
     @Test
