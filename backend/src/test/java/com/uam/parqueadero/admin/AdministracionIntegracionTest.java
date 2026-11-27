@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
+import com.uam.parqueadero.comun.UmbralConfianza;
 import com.uam.parqueadero.entrada.EstadoIngreso;
 import com.uam.parqueadero.entrada.OperacionCarrilEntrada;
 import com.uam.parqueadero.entrada.SolicitudIngreso;
@@ -29,6 +30,9 @@ class AdministracionIntegracionTest {
 
     @Autowired
     private OperacionCarrilEntrada entrada;
+
+    @Autowired
+    private UmbralConfianza umbral;
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -70,6 +74,14 @@ class AdministracionIntegracionTest {
         var resultado = entrada.procesar(lectura("QHU803"));
         assertEquals(EstadoIngreso.RECHAZADO, resultado.resultado());
         assertTrue(resultado.lleno());
+    }
+
+    @Test
+    void usaUmbralNuevoParaLasSiguientesLecturas() {
+        administracion.cambiarUmbral(new BigDecimal("0.96"));
+
+        assertEquals(new BigDecimal("0.96"), umbral.valor());
+        assertEquals(EstadoIngreso.PENDIENTE_VALIDACION, entrada.procesar(lectura("QHU804")).resultado());
     }
 
     private static SolicitudIngreso lectura(String placa) {

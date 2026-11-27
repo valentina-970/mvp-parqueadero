@@ -29,4 +29,6 @@ public interface ConfiguracionAdministrable {
     /** Crea o actualiza la capacidad del tipo para la sede. */
     void guardarCupo(UUID sede, UUID tipo, int capacidad);
 
+    /** Guarda el umbral que consultan los carriles. */
+    void guardarUmbral(BigDecimal umbral);
 }

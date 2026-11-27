@@ -40,7 +40,7 @@ public class AdministracionController {
         this.parqueadero = parqueadero;
     }
 
-    /** Devuelve tarifas, horarios y cupos. */
+    /** Devuelve tarifas, horarios, cupos y umbral. */
     @Operation(summary = "Consultar la configuración del parqueadero")
     @GetMapping("/configuracion")
     public ConfiguracionParqueadero consultar() {
@@ -77,6 +77,14 @@ public class AdministracionController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cupo(@PathVariable UUID tipo, @Valid @RequestBody CupoSolicitud solicitud) {
         parqueadero.cambiarCupo(tipo, solicitud.capacidad().intValueExact());
+    }
+
+    /** Modifica el umbral de confianza de ambos carriles. */
+    @Operation(summary = "Cambiar el umbral de confianza")
+    @PostMapping("/umbral")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void umbral(@Valid @RequestBody UmbralSolicitud solicitud) {
+        parqueadero.cambiarUmbral(solicitud.valor());
     }
 
     /** Devuelve el motivo del rechazo de una regla de configuración. */
@@ -119,4 +127,10 @@ public class AdministracionController {
             BigDecimal capacidad) {
     }
 
+    /** Umbral de confianza; la precisión máxima corresponde al tamaño del parámetro persistido. */
+    public record UmbralSolicitud(
+            @NotNull(message = "Ingresa el umbral de confianza")
+            @Digits(integer = 1, fraction = 118, message = "El umbral debe estar entre 0 y 1")
+            BigDecimal valor) {
+    }
 }

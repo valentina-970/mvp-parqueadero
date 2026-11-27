@@ -27,6 +27,7 @@ import org.mockito.InOrder;
 
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
 import com.uam.parqueadero.comun.SedeActual;
+import com.uam.parqueadero.comun.UmbralConfianza;
 import com.uam.parqueadero.cupo.Cupo;
 import com.uam.parqueadero.cupo.CuposDeLaSede;
 import com.uam.parqueadero.entrada.BloqueoCupos;
@@ -38,10 +39,11 @@ class AdministrarParqueaderoTest {
     private final ConfiguracionAdministrable datos = mock(ConfiguracionAdministrable.class);
     private final CuposDeLaSede cupos = mock(CuposDeLaSede.class);
     private final BloqueoCupos bloqueo = mock(BloqueoCupos.class);
+    private final UmbralConfianza umbral = mock(UmbralConfianza.class);
     private final SedeActual sede = () -> sedeId;
     private final Clock reloj = Clock.fixed(Instant.parse("2026-11-26T15:00:00Z"), ZoneOffset.UTC);
     private final AdministrarParqueadero administracion =
-            new AdministrarParqueadero(datos, cupos, bloqueo, sede, reloj);
+            new AdministrarParqueadero(datos, cupos, bloqueo, umbral, sede, reloj);
 
     @BeforeEach
     void preparar() {
@@ -134,4 +136,19 @@ class AdministrarParqueaderoTest {
         verify(datos).guardarCupo(sedeId, tipoId, 3);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "0.875", "1"})
+    void guardaUmbralEnElIntervalo(String valor) {
+        BigDecimal limite = new BigDecimal(valor);
+        administracion.cambiarUmbral(limite);
+        verify(datos).guardarUmbral(limite);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"-0.01", "1.01"})
+    void rechazaUmbralFueraDelIntervalo(String valor) {
+        assertThrows(ConfiguracionInvalidaException.class,
+                () -> administracion.cambiarUmbral(new BigDecimal(valor)));
+        verify(datos, never()).guardarUmbral(any());
+    }
 }

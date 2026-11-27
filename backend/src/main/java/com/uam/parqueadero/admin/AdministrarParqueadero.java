@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Tarifas;
 import com.uam.parqueadero.comun.SedeActual;
+import com.uam.parqueadero.comun.UmbralConfianza;
 import com.uam.parqueadero.cupo.Cupo;
 import com.uam.parqueadero.cupo.CuposDeLaSede;
 import com.uam.parqueadero.entrada.BloqueoCupos;
@@ -25,14 +26,16 @@ public class AdministrarParqueadero {
     private final ConfiguracionAdministrable configuracion;
     private final CuposDeLaSede cupos;
     private final BloqueoCupos bloqueoCupos;
+    private final UmbralConfianza umbral;
     private final SedeActual sede;
     private final Clock reloj;
 
-    public AdministrarParqueadero(ConfiguracionAdministrable configuracion,
-                                   CuposDeLaSede cupos, BloqueoCupos bloqueoCupos, SedeActual sede, Clock reloj) {
+    public AdministrarParqueadero(ConfiguracionAdministrable configuracion, CuposDeLaSede cupos,
+                                   BloqueoCupos bloqueoCupos, UmbralConfianza umbral, SedeActual sede, Clock reloj) {
         this.configuracion = configuracion;
         this.cupos = cupos;
         this.bloqueoCupos = bloqueoCupos;
+        this.umbral = umbral;
         this.sede = sede;
         this.reloj = reloj;
     }
@@ -41,7 +44,8 @@ public class AdministrarParqueadero {
     @Transactional(readOnly = true)
     public ConfiguracionParqueadero consultar() {
         UUID sedeId = sede.id();
-        return new ConfiguracionParqueadero(configuracion.tarifas(sedeId), configuracion.horarios(), cupos.todos(sedeId));
+        return new ConfiguracionParqueadero(configuracion.tarifas(sedeId), configuracion.horarios(),
+                cupos.todos(sedeId), umbral.valor());
     }
 
     /** Consulta las tarifas vigentes de la sede. */
@@ -91,6 +95,15 @@ public class AdministrarParqueadero {
             throw new ConfiguracionInvalidaException("El cupo no puede ser menor que los vehículos adentro (" + ocupados + ")");
         }
         configuracion.guardarCupo(sedeId, tipo, capacidad);
+    }
+
+    /** Actualiza el umbral usado para las próximas lecturas en ambos carriles. */
+    @Transactional
+    public void cambiarUmbral(BigDecimal valor) {
+        if (valor.signum() < 0 || valor.compareTo(BigDecimal.ONE) > 0) {
+            throw new ConfiguracionInvalidaException("El umbral de confianza debe estar entre 0 y 1");
+        }
+        configuracion.guardarUmbral(valor);
     }
 
     private String exigirTipo(UUID tipo) {

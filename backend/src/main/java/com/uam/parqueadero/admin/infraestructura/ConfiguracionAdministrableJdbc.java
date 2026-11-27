@@ -95,4 +95,12 @@ public class ConfiguracionAdministrableJdbc implements ConfiguracionAdministrabl
                 """, sede, tipo, capacidad);
     }
 
+    @Override
+    public void guardarUmbral(BigDecimal umbral) {
+        jdbc.update("""
+                INSERT INTO parametro (clave, valor, descripcion)
+                VALUES ('umbral_confianza', ?, 'Confianza mínima para procesar una lectura automáticamente')
+                ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor
+                """, umbral.stripTrailingZeros().toPlainString());
+    }
 }

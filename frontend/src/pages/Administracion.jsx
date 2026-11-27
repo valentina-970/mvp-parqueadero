@@ -125,6 +125,16 @@ function Cupos({ tipos, cupos, alGuardar }) {
   );
 }
 
+function Umbral({ valor }) {
+  return (
+    <Seccion titulo="Umbral de confianza" descripcion="Las lecturas por debajo de este valor requieren validación manual.">
+      <FormularioConfiguracion ruta="/api/admin/umbral" convertir={(valores) => ({ valor: valores.umbral })}>
+        <Campo etiqueta="Confianza mínima (0 a 1)" nombre="umbral" valor={valor} min="0" max="1" step="any" />
+      </FormularioConfiguracion>
+    </Seccion>
+  );
+}
+
 /** Configuración de la sede, disponible para el rol administrador (HU-08). */
 export default function Administracion() {
   const [configuracion, setConfiguracion] = useState(null);
@@ -164,6 +174,7 @@ export default function Administracion() {
           <Tarifas tarifas={configuracion.tarifas} />
           <Horarios horarios={configuracion.horarios} />
           <Cupos tipos={configuracion.tarifas} cupos={configuracion.cupos} alGuardar={recargar} />
+          <Umbral valor={configuracion.umbral} />
         </>
       ) : !error && <p className="text-secondary">Cargando…</p>}
     </>
