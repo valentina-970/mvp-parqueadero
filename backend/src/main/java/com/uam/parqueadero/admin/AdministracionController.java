@@ -1,6 +1,7 @@
 package com.uam.parqueadero.admin;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Tarifas;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,7 +38,7 @@ public class AdministracionController {
         this.parqueadero = parqueadero;
     }
 
-    /** Devuelve tarifas. */
+    /** Devuelve tarifas y horarios. */
     @Operation(summary = "Consultar la configuración del parqueadero")
     @GetMapping("/configuracion")
     public ConfiguracionParqueadero consultar() {
@@ -56,6 +58,15 @@ public class AdministracionController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void tarifas(@PathVariable UUID tipo, @Valid @RequestBody TarifasSolicitud solicitud) {
         parqueadero.cambiarTarifas(tipo, solicitud.diurna(), solicitud.nocturna());
+    }
+
+    /** Modifica los horarios de ambas franjas juntos. */
+    @Operation(summary = "Cambiar los horarios de las franjas")
+    @PostMapping("/horarios")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void horarios(@Valid @RequestBody HorariosSolicitud solicitud) {
+        parqueadero.cambiarHorarios(new Horarios(solicitud.inicioDiurno(), solicitud.finDiurno(),
+                solicitud.inicioNocturno(), solicitud.finNocturno()));
     }
 
     /** Devuelve el motivo del rechazo de una regla de configuración. */
@@ -80,6 +91,13 @@ public class AdministracionController {
             @NotNull(message = "Ingresa la tarifa nocturna")
             @Digits(integer = 10, fraction = 2, message = "La tarifa nocturna admite 10 enteros y 2 decimales")
             BigDecimal nocturna) {
+    }
+
+    /** Límites inclusivos de las dos franjas (HH:mm). */
+    public record HorariosSolicitud(@NotNull(message = "Ingresa el inicio diurno") LocalTime inicioDiurno,
+                                    @NotNull(message = "Ingresa el fin diurno") LocalTime finDiurno,
+                                    @NotNull(message = "Ingresa el inicio nocturno") LocalTime inicioNocturno,
+                                    @NotNull(message = "Ingresa el fin nocturno") LocalTime finNocturno) {
     }
 
 }

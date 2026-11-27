@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
 import com.uam.parqueadero.comun.SedeActual;
 
 class AdministrarParqueaderoTest {
@@ -76,6 +78,27 @@ class AdministrarParqueaderoTest {
 
         assertTrue(error.getMessage().contains("negativas"));
         verify(datos, never()).reemplazarTarifa(any(), any(), any(), any(), any());
+    }
+
+    /** CP-08-07: rechaza tanto un minuto compartido como un minuto sin cubrir. */
+    @ParameterizedTest
+    @ValueSource(strings = {"18:00", "18:02"})
+    void rechazaFranjasConSolapamientoOHuecos(String inicioNocturno) {
+        Horarios propuestos = new Horarios(LocalTime.parse("06:00"), LocalTime.parse("18:00"),
+                LocalTime.parse(inicioNocturno), LocalTime.parse("05:59"));
+
+        assertThrows(ConfiguracionInvalidaException.class, () -> administracion.cambiarHorarios(propuestos));
+        verify(datos, never()).guardarHorarios(any());
+    }
+
+    @Test
+    void guardaFranjasQueCubrenMedianoche() {
+        Horarios propuestos = new Horarios(LocalTime.parse("07:00"), LocalTime.parse("19:29"),
+                LocalTime.parse("19:30"), LocalTime.parse("06:59"));
+
+        administracion.cambiarHorarios(propuestos);
+
+        verify(datos).guardarHorarios(propuestos);
     }
 
 }

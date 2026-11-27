@@ -2,6 +2,7 @@ package com.uam.parqueadero.admin;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Tarifas;
 import com.uam.parqueadero.comun.SedeActual;
 
@@ -31,7 +33,7 @@ public class AdministrarParqueadero {
     @Transactional(readOnly = true)
     public ConfiguracionParqueadero consultar() {
         UUID sedeId = sede.id();
-        return new ConfiguracionParqueadero(configuracion.tarifas(sedeId));
+        return new ConfiguracionParqueadero(configuracion.tarifas(sedeId), configuracion.horarios());
     }
 
     /** Consulta las tarifas vigentes de la sede. */
@@ -56,6 +58,20 @@ public class AdministrarParqueadero {
         configuracion.reemplazarTarifa(sedeId, tipo, "NOCTURNA", nocturna, ahora);
     }
 
+    /** Guarda dos franjas que cubren todo el día sin huecos ni solapamientos. */
+    @Transactional
+    public void cambiarHorarios(Horarios horarios) {
+        int inicioDiurno = minuto(horarios.inicioDiurno());
+        int finDiurno = minuto(horarios.finDiurno());
+        int inicioNocturno = minuto(horarios.inicioNocturno());
+        int finNocturno = minuto(horarios.finNocturno());
+        if ((finDiurno + 1) % 1440 != inicioNocturno || (finNocturno + 1) % 1440 != inicioDiurno
+                || inicioDiurno == inicioNocturno) {
+            throw new ConfiguracionInvalidaException("Las franjas deben cubrir las 24 horas sin solaparse ni dejar huecos");
+        }
+        configuracion.guardarHorarios(horarios);
+    }
+
     private String exigirTipo(UUID tipo) {
         String codigo = configuracion.bloquearTipo(tipo);
         if (codigo == null) {
@@ -64,4 +80,10 @@ public class AdministrarParqueadero {
         return codigo;
     }
 
+    private static int minuto(LocalTime hora) {
+        if (hora.getSecond() != 0 || hora.getNano() != 0) {
+            throw new ConfiguracionInvalidaException("Los horarios deben indicarse en horas y minutos");
+        }
+        return hora.getHour() * 60 + hora.getMinute();
+    }
 }

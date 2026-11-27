@@ -1,6 +1,7 @@
 package com.uam.parqueadero.admin.infraestructura;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -9,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.uam.parqueadero.admin.ConfiguracionAdministrable;
+import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
 import com.uam.parqueadero.admin.ConfiguracionParqueadero.Tarifas;
 
 /** Persiste los cambios de administración en PostgreSQL. */
@@ -37,6 +39,18 @@ public class ConfiguracionAdministrableJdbc implements ConfiguracionAdministrabl
     }
 
     @Override
+    public Horarios horarios() {
+        return jdbc.queryForObject("""
+                SELECT d.hora_inicio AS inicio_diurno, d.hora_fin AS fin_diurno,
+                       n.hora_inicio AS inicio_nocturno, n.hora_fin AS fin_nocturno
+                FROM franja d CROSS JOIN franja n
+                WHERE d.codigo = 'DIURNA' AND n.codigo = 'NOCTURNA'
+                """, (rs, fila) -> new Horarios(rs.getObject("inicio_diurno", LocalTime.class),
+                rs.getObject("fin_diurno", LocalTime.class), rs.getObject("inicio_nocturno", LocalTime.class),
+                rs.getObject("fin_nocturno", LocalTime.class)));
+    }
+
+    @Override
     public String bloquearTipo(UUID tipo) {
         return jdbc.queryForList("SELECT codigo FROM tipo_vehiculo WHERE id = ? FOR NO KEY UPDATE",
                 String.class, tipo).stream().findFirst().orElse(null);
@@ -60,6 +74,16 @@ public class ConfiguracionAdministrableJdbc implements ConfiguracionAdministrabl
                 INSERT INTO tarifa (sede_id, tipo_vehiculo_id, franja_id, valor, vigente_desde)
                 VALUES (?, ?, ?, ?, ?)
                 """, sede, tipo, franjaId, valor, instante);
+    }
+
+    @Override
+    public void guardarHorarios(Horarios horarios) {
+        jdbc.update("""
+                UPDATE franja
+                SET hora_inicio = CASE codigo WHEN 'DIURNA' THEN CAST(? AS time) ELSE CAST(? AS time) END,
+                    hora_fin = CASE codigo WHEN 'DIURNA' THEN CAST(? AS time) ELSE CAST(? AS time) END
+                WHERE codigo IN ('DIURNA', 'NOCTURNA')
+                """, horarios.inicioDiurno(), horarios.inicioNocturno(), horarios.finDiurno(), horarios.finNocturno());
     }
 
 }

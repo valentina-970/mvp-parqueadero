@@ -90,6 +90,19 @@ function Tarifas({ tarifas }) {
   );
 }
 
+function Horarios({ horarios }) {
+  return (
+    <Seccion titulo="Horarios de las franjas" descripcion="El minuto de fin está incluido. Las franjas deben cubrir las 24 horas.">
+      <FormularioConfiguracion ruta="/api/admin/horarios" convertir={(valores) => valores}>
+        <Campo etiqueta="Inicio diurno" nombre="inicioDiurno" tipo="time" valor={horarios.inicioDiurno.slice(0, 5)} />
+        <Campo etiqueta="Fin diurno" nombre="finDiurno" tipo="time" valor={horarios.finDiurno.slice(0, 5)} />
+        <Campo etiqueta="Inicio nocturno" nombre="inicioNocturno" tipo="time" valor={horarios.inicioNocturno.slice(0, 5)} />
+        <Campo etiqueta="Fin nocturno" nombre="finNocturno" tipo="time" valor={horarios.finNocturno.slice(0, 5)} />
+      </FormularioConfiguracion>
+    </Seccion>
+  );
+}
+
 /** Configuración de la sede, disponible para el rol administrador (HU-08). */
 export default function Administracion() {
   const [configuracion, setConfiguracion] = useState(null);
@@ -127,6 +140,7 @@ export default function Administracion() {
       {configuracion ? (
         <>
           <Tarifas tarifas={configuracion.tarifas} />
+          <Horarios horarios={configuracion.horarios} />
         </>
       ) : !error && <p className="text-secondary">Cargando…</p>}
     </>

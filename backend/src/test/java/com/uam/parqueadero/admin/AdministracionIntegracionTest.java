@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.uam.parqueadero.admin.ConfiguracionParqueadero.Horarios;
 import com.uam.parqueadero.entrada.EstadoIngreso;
 import com.uam.parqueadero.entrada.OperacionCarrilEntrada;
 import com.uam.parqueadero.entrada.SolicitudIngreso;
@@ -46,6 +48,16 @@ class AdministracionIntegracionTest {
         assertEquals(tarifaAnterior, tarifaUsada("QHU801"));
         assertEquals(valorAnterior.add(aumento), valorCobrado("QHU802"));
         assertNotEquals(tarifaAnterior, tarifaUsada("QHU802"));
+    }
+
+    @Test
+    void actualizaAmbosHorariosEnLaBase() {
+        Horarios horarios = new Horarios(LocalTime.parse("07:00"), LocalTime.parse("19:29"),
+                LocalTime.parse("19:30"), LocalTime.parse("06:59"));
+
+        administracion.cambiarHorarios(horarios);
+
+        assertEquals(horarios, administracion.consultar().horarios());
     }
 
     private static SolicitudIngreso lectura(String placa) {
