@@ -23,18 +23,18 @@ Completar las funcionalidades obligatorias (lectura manual, cupos, administraci�
 
 | ID | Historia o tarea | Responsable | Puntos | Estado |
 |---|---|---|---|---|
-| HU-06 | Validar manualmente una lectura dudosa | Miguel | 5 | Por hacer |
+| HU-06 | Validar manualmente una lectura dudosa | Miguel | 5 | En revisión |
 | HU-07 | Controlar los cupos por tipo de vehículo | Juan Manuel | 2 | En revisión |
-| HU-08 | Administrar tarifas, franjas y cupos | Valentina | 3 | En progreso |
+| HU-08 | Administrar tarifas, franjas y cupos | Valentina | 3 | En revisión |
 | HU-09 | Consultar eventos y cobros | Juan | 2 | En revisión |
 | TT-11 | Lectura de placas con la cámara del celular (reemplaza a TT-10) | Juan | 2 | En revisión |
 | TT-08 | Release v1.0.0 hacia `main`, con commits de los cuatro integrantes | Juan Manuel | — | Por hacer |
 | OBS-1 | Mostrar el cobro generado en la pantalla de entrada | Juan | — | Terminado |
 | OBS-2 | Rechazo limpio de ingresos simultáneos de la misma placa (bloqueo de la fila de cupo) | Juan | — | Terminado |
 | OBS-3 | Mover el clasificador de placas a `comun` | Juan | — | Terminado |
-| OBS-5 | Pruebas de integración de las condiciones de carrera (si hay tiempo) | Juan Manuel | — | Por hacer |
-| OBS-6 | Javadoc de `NuevoCobro` | Miguel | — | Por hacer |
-| OBS-7 | Mensaje "No se pudo conectar con el servidor" en lugar de "Failed to fetch" | Juan Manuel | — | Por hacer |
+| OBS-5 | Pruebas de integración de las condiciones de carrera (si hay tiempo) | Juan Manuel | — | Terminado |
+| OBS-6 | Javadoc de `NuevoCobro` | Miguel | — | Terminado |
+| OBS-7 | Mensaje "No se pudo conectar con el servidor" en lugar de "Failed to fetch" | Juan Manuel | — | Terminado |
 
 Total de historias: 12 puntos, más TT-11 (2 puntos). Las observaciones (OBS) salen de la revisión de Juan Manuel al cierre del Sprint 1; la OBS-4 (cobros vencidos, SG-05) se decidió dejar fuera del MVP.
 
@@ -74,6 +74,44 @@ Total de historias: 12 puntos, más TT-11 (2 puntos). Las observaciones (OBS) sa
 - Hice: creé la rama `feature/HU-08-admin-tarifas` y leí los criterios CA-1 a CA-7 de HU-08. Con lo que respondió Juan Manuel ya quedaron definidos los dos puntos técnicos: el umbral de confianza se edita en la fila `umbral_confianza` de la tabla `parametro` y los vehículos que están adentro se cuentan con las estancias sin hora de salida.
 - Haré: el backend de HU-08 solo para el administrador: tarifas con la regla de que la nocturna sea menor que la diurna (salvo las motos en $0) y ninguna negativa, franjas que cubran las 24 horas sin solaparse, cupos que no queden por debajo de los vehículos que están adentro y umbral entre 0 y 1. Después, sus pruebas y la pantalla `/administracion`.
 - Bloqueos: ninguno.
+(pegar el daily de Miguel)
+
+### Miércoles 25 de noviembre
+
+**Juan**
+- Hice: TT-11, lectura de placas con la cámara del celular, en `feature/TT-11-camara-celular`. El botón "Leer con la cámara" del simulador toma la foto y la lee en el navegador con Tesseract.js, sin cambios en el backend. La primera versión leía la foto completa y falló con placas reales (letras falsas en la rejilla, el piso y los logos), así que ahora primero localiza la placa amarilla, rechaza las fotos con reflejo de flash y lee solo los seis caracteres (`procesadorPlaca.js`). Probado desde el celular por la red local con placas reales: carro 94 %, moto 89 %, carro de lejos 93 %; con flash pide otra foto y sin placa avisa que no la encontró. Supuesto nuevo registrado en `02-decisiones-del-grupo.md`: si el último carácter es 1/I o 0/O, decide el tipo elegido en el carril. Lint y build limpios (PR #35).
+- Haré: jueves y viernes, borrador del documento de análisis A y B y estructura del manual de usuario. Revisar los PR que me asignen.
+- Bloqueos: ninguno.
+- Pedido al equipo: revisar el PR de TT-11 (Juan Manuel o Valentina). Miguel, TT-11 también modifica `Simulador.jsx` (botón de cámara y mensajes); tu cambio en `interpretar` no se cruza con el mío, pero haz `git merge develop` antes de fusionar HU-06.
+(pegar el daily de Juan Manuel)
+(pegar el daily de Valentina)
+(pegar el daily de Miguel)
+
+### Jueves 26 de noviembre
+
+**Juan**
+- Ausente por otras actividades académicas.
+(pegar el daily de Juan Manuel)
+(pegar el daily de Valentina)
+(pegar el daily de Miguel)
+
+### Viernes 27 de noviembre
+
+**Juan**
+- Ausente por otras actividades académicas.
+(pegar el daily de Juan Manuel)
+(pegar el daily de Valentina)
+(pegar el daily de Miguel)
+
+### Sábado 28 de noviembre
+
+**Juan**
+- Hice: revisé y aprobé el PR de HU-06 (#36) después de correr la suite completa contra la base real (166 pruebas en verde). Hoy verifiqué `develop` con todo lo fusionado el jueves (HU-08, OBS-5, OBS-7 y los contratos de pasarela de pagos y facturación electrónica, PR #37 a #40): 188 pruebas en verde, lint y build del frontend limpios. Con eso queda todo el código del sprint en `develop`. Actualicé el tablero de este documento.
+- Haré: ensayo de los 8 escenarios de la demo con Docker desde cero y con el celular, y de ahí las capturas del manual de usuario. Borrador del documento de análisis A y B. El domingo, la review como PO y el release v1.0.0 con Juan Manuel.
+- Bloqueos: no hay fecha oficial de entrega; trabajamos con la sustentación el miércoles 2 de diciembre, así que el `.zip` debe quedar listo el martes 1.
+- Pedido al equipo: desde hoy no entra código nuevo a `develop`, salvo correcciones que salgan del ensayo. Cada uno envía su parte del documento de análisis y de los manuales a más tardar el domingo.
+(pegar el daily de Juan Manuel)
+(pegar el daily de Valentina)
 (pegar el daily de Miguel)
 
 ## Review (domingo 29 de noviembre)
