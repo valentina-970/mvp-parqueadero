@@ -65,11 +65,14 @@ class AdministracionIntegracionTest {
         assertEquals(horarios, administracion.consultar().horarios());
     }
 
+    /** El cupo queda igual a los carros que ya están adentro, así no depende de que la base esté vacía. */
     @Test
     void configuraLaCapacidadQueUsaElCarril() {
         var carro = administracion.tarifas().stream().filter(t -> t.codigo().equals("CARRO")).findFirst().orElseThrow();
+        int adentro = administracion.consultar().cupos().stream()
+                .filter(c -> c.codigo().equals("CARRO")).findFirst().orElseThrow().ocupados();
 
-        administracion.cambiarCupo(carro.tipoId(), 0);
+        administracion.cambiarCupo(carro.tipoId(), adentro);
 
         var resultado = entrada.procesar(lectura("QHU803"));
         assertEquals(EstadoIngreso.RECHAZADO, resultado.resultado());
